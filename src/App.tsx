@@ -28,7 +28,6 @@ const AppContainer = styled.div`
 
 function App() {
   const { network } = useTonConnect();
-
   return (
     <StyledApp>
       <AppContainer>
