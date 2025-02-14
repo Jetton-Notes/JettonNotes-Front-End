@@ -8,6 +8,7 @@ import { Button, FlexBoxCol, FlexBoxRow } from "./components/styled/styled";
 import { useTonConnect } from "./hooks/useTonConnect";
 import { CHAIN } from "@tonconnect/protocol";
 import "@twa-dev/sdk";
+import Base from "./components/Base";
 
 const StyledApp = styled.div`
   background-color: #e8e8e8;
@@ -17,8 +18,9 @@ const StyledApp = styled.div`
     background-color: #222;
     color: white;
   }
+  
   min-height: 100vh;
-  padding: 20px 20px;
+  
 `;
 
 const AppContainer = styled.div`
@@ -26,29 +28,34 @@ const AppContainer = styled.div`
   margin: 0 auto;
 `;
 
+//TODO: I dump the current UI
+//TODO: I need  buttons for pages
+
 function App() {
   const { network } = useTonConnect();
-  return (
-    <StyledApp>
-      <AppContainer>
-        <FlexBoxCol>
-          <FlexBoxRow>
-            <TonConnectButton />
-            <Button>
-              {network
-                ? network === CHAIN.MAINNET
-                  ? "mainnet"
-                  : "testnet"
-                : "N/A"}
-            </Button>
-          </FlexBoxRow>
-          <Counter />
-          <TransferTon />
-          <Jetton />
-        </FlexBoxCol>
-      </AppContainer>
-    </StyledApp>
-  );
+  return <Base></Base>
+  // return (
+  //   <StyledApp>
+  //     <AppContainer>
+  //       <FlexBoxCol>
+  //         <FlexBoxRow>
+  //           <TonConnectButton />
+  //           <Button>
+              // {network
+              //   ? network === CHAIN.MAINNET
+              //     ? "mainnet"
+              //     : "testnet"
+              //   : "N/A"}
+  //           </Button>
+  //         </FlexBoxRow>
+  //         <Base></Base>
+  //         <Counter />
+  //         <TransferTon />
+  //         <Jetton />
+  //       </FlexBoxCol>
+  //     </AppContainer>
+  //   </StyledApp>
+  // );
 }
 
 export default App;
