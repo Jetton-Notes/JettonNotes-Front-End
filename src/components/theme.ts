@@ -56,7 +56,7 @@ export default function getTheme() {
                             boxShadow: 'none',
                         },
                         "&:hover": {
-                            backgroundColor: '#a7e397'
+                            backgroundColor: '#b2ccf3'
                         }
                     },
                 },
@@ -113,7 +113,7 @@ export default function getTheme() {
                 styleOverrides: {
                     root: {
                         '&.Mui-selected': {
-                            color: '#efe9d1',
+                            color: '#b2ccf3',
                         },
                     },
                 },
