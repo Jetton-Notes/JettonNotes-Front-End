@@ -10,6 +10,7 @@ The project is highly-opinionated, and there are many other alternate routes it 
 - Uses vite with react (alternative to create-react-app)
 - Uses the `ton` npm package
 
+
 # Prerequesities
 
 - Node.js v16 (other versions may work, needs more testing)
