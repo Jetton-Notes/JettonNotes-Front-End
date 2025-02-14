@@ -2,10 +2,8 @@ import { Button, Box, Typography, CssBaseline, IconButton, Snackbar, ThemeProvid
 import * as React from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import getTheme from "./theme";
-import { useTonConnect } from "../hooks/useTonConnect";
-import { TonConnectButton } from "@tonconnect/ui-react";
-import { CHAIN } from "@tonconnect/protocol";
 import ResponsiveAppBar from "./AppBar";
+import { createNoteClicked } from "../actions/createNoteClicked"
 
 const theme = getTheme();
 
@@ -18,6 +16,7 @@ export enum Routes {
 
 
 export default function Base() {
+
 
     const [currentRoute, setCurrentRoute] = React.useState(Routes.CREATE);
 
@@ -48,13 +47,21 @@ export default function Base() {
 
 
 
+    const onNotify = (msg: string, type: string) => {
+        
+        openSnackbar(msg);
+    }
+
 
 
 
     const getRoutes = () => {
         switch (currentRoute) {
             case Routes.CREATE:
-                return <CreateRoute depositAmount={depositAmount} setDepositAmount={setDepositAmount}></CreateRoute>
+                return <CreateRoute
+                    onNotify={onNotify}
+                    depositAmount={depositAmount}
+                    setDepositAmount={setDepositAmount}></CreateRoute>
             case Routes.PAYTO:
                 return <PayToRoute depositAmount={depositAmount} setDepositAmount={setDepositAmount} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></PayToRoute>
             case Routes.REDEEM:
@@ -131,7 +138,8 @@ function RouteFooter() {
 
 export type CreateRouteProps = {
     depositAmount: string,
-    setDepositAmount: (to: string) => void
+    setDepositAmount: (to: string) => void,
+    onNotify: (msg: string, type: string) => void
 }
 
 function CreateRoute(props: CreateRouteProps) {
@@ -152,7 +160,7 @@ function CreateRoute(props: CreateRouteProps) {
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Create Note</Button>                </Stack>
+                <Button variant="contained" onClick={() => createNoteClicked(props.depositAmount, props.onNotify)}>Create Note</Button>                </Stack>
 
             <RouteFooter></RouteFooter>
 
