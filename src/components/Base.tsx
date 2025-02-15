@@ -1,9 +1,10 @@
-import { Button, Box, Typography, CssBaseline, IconButton, Snackbar, ThemeProvider, Paper, TextField, Stack } from "@mui/material";
+import { Button, Box, Typography, CssBaseline, IconButton, Snackbar, ThemeProvider, Paper, TextField, Stack, FormGroup, FormControlLabel } from "@mui/material";
 import * as React from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import getTheme from "./theme";
 import ResponsiveAppBar from "./AppBar";
-import { createNoteClicked } from "../actions/createNoteClicked"
+import { deposit, parseNote, toNoteHex } from "../crypto/cryptonotes";
+import Checkbox from '@mui/material/Checkbox';
 
 const theme = getTheme();
 
@@ -11,7 +12,8 @@ export enum Routes {
     CREATE = "CREATE",
     PAYTO = "PAYTO",
     REDEEM = "REDEEM",
-    NOTEBALANCE = "NOTEBALANCE"
+    NOTEBALANCE = "NOTEBALANCE",
+    SHOWNOTESECRET = "SHOWNOTESECRET"
 }
 
 
@@ -48,10 +50,15 @@ export default function Base() {
 
 
     const onNotify = (msg: string, type: string) => {
-        
+
         openSnackbar(msg);
     }
 
+    const createNoteClicked = async (amount: any) => {
+        const noteString = await deposit({ amount, currency: "tgBTC" });
+        setNoteString(noteString);
+        setCurrentRoute(Routes.SHOWNOTESECRET)
+    }
 
 
 
@@ -61,13 +68,17 @@ export default function Base() {
                 return <CreateRoute
                     onNotify={onNotify}
                     depositAmount={depositAmount}
-                    setDepositAmount={setDepositAmount}></CreateRoute>
+                    setDepositAmount={setDepositAmount}
+                    createNoteClicked={createNoteClicked}
+                ></CreateRoute>
             case Routes.PAYTO:
                 return <PayToRoute depositAmount={depositAmount} setDepositAmount={setDepositAmount} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></PayToRoute>
             case Routes.REDEEM:
                 return <RedeemRoute noteString={noteString} setNoteString={setNoteString}></RedeemRoute>
             case Routes.NOTEBALANCE:
                 return <NoteBalanceRoute jettonBalance={jettonBalance} jettonTicker={jettonTicker} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></NoteBalanceRoute>
+            case Routes.SHOWNOTESECRET:
+                return <ShowNoteSecret noteString={noteString}></ShowNoteSecret>
             default:
                 return <div>Invalid route</div>
         }
@@ -89,6 +100,9 @@ export default function Base() {
                 break;
             case 3:
                 setCurrentRoute(Routes.NOTEBALANCE);
+                break;
+            case 4:
+                setCurrentRoute(Routes.SHOWNOTESECRET);
                 break;
             default:
                 break;
@@ -129,19 +143,22 @@ export default function Base() {
 }
 
 
-function RouteFooter() {
+function RouteFooter(props: { content: string }) {
 
     return <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center", p: 2 }}>
-        <p>The Jetton Notes currently use tgBTC on Ton Testnet</p>
+        <p>{props.content}</p>
     </Stack>
 }
 
 export type CreateRouteProps = {
     depositAmount: string,
     setDepositAmount: (to: string) => void,
-    onNotify: (msg: string, type: string) => void
+    onNotify: (msg: string, type: string) => void,
+    createNoteClicked: (amount: string) => Promise<void>
 }
 
+
+//THen when it's been copied the user can make the deposit
 function CreateRoute(props: CreateRouteProps) {
     return <Box >
         <Paper sx={{ maxWidth: 936, margin: "auto", overflow: "hidden", mt: "10px" }}>
@@ -158,13 +175,63 @@ function CreateRoute(props: CreateRouteProps) {
                 }}></TextField>
 
             </Stack>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button variant="contained" onClick={() => props.createNoteClicked(props.depositAmount)}>Create Note</Button>                </Stack>
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
+        </Paper>
+    </Box >
+}
+
+export type ShowNoteSecretPageProps = {
+    noteString: string
+}
+
+function ShowNoteSecret(props: ShowNoteSecretPageProps) {
+    const [commitment, setCommitment] = React.useState("");
+    const [copiedSecret, setCopiedSecret] = React.useState(false);
+
+    React.useEffect(() => {
+        const getCommitment = async () => {
+            const parsedNote = await parseNote(props.noteString);
+            setCommitment(toNoteHex(parsedNote.deposit.commitment));
+        }
+
+        getCommitment()
+    })
+
+
+    return <Box >
+        <Paper sx={{ maxWidth: 936, margin: "auto", overflow: "hidden", mt: "10px" }}>
+            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Typography component="h1" variant="h4">Jetton Notes</Typography>
+            </Stack>
+            <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
+                <Typography component="p" variant="subtitle1">You can see the Jetton Note here. Copy it.</Typography>
+            </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained" onClick={() => createNoteClicked(props.depositAmount, props.onNotify)}>Create Note</Button>                </Stack>
+                <div>View Key (commitment) used for checking balance:</div>
+            </Stack>
+            <pre style={{ overflow: "auto", maxWidth: "80%", margin: "0 auto" }}>{commitment}</pre>
 
-            <RouteFooter></RouteFooter>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <div>Note Secret used for withdrawing the balance:</div>
+            </Stack>
+            <pre style={{ overflow: "auto", maxWidth: "80%", margin: "0 auto" }}>{props.noteString}</pre>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <FormGroup>
+                    <FormControlLabel label="I have backed up the View Key and Secret" control={<Checkbox checked={copiedSecret} onChange={
+                        (event: React.ChangeEvent<HTMLInputElement>) => {
+                            setCopiedSecret(event.target.checked);
+                        }
+                    }></Checkbox>}></FormControlLabel>
+                </FormGroup>
+            </Stack>
 
-        </Paper>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button disabled={!copiedSecret} variant="contained" onClick={() => { }}>Deposit Jettons</Button>                </Stack>
+            <RouteFooter content="The secret is used for withdrawing the value. Keep it confidential. If you lose your secret, there is no way to recover the deposit!" ></RouteFooter>
+        </Paper >
     </Box >
 }
 
@@ -186,7 +253,7 @@ function PayToRoute(props: PayToRoute) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField type="text" label="Note Commitment" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                <TextField type="text" label="Note Commitment (View Key)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     props.setNoteCommitment(event.target.value);
                 }}></TextField>
             </Stack>
@@ -199,14 +266,12 @@ function PayToRoute(props: PayToRoute) {
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Deposit</Button>
+                <Button variant="contained">Deposit Value</Button>
             </Stack>
 
-            <RouteFooter></RouteFooter>
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
-
-
 }
 
 export type RedeemRouteProps = {
@@ -236,7 +301,7 @@ function RedeemRoute(props: RedeemRouteProps) {
                 <Button variant="contained">Redeem Note</Button>                </Stack>
 
 
-            <RouteFooter></RouteFooter>
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
 }
@@ -263,7 +328,7 @@ function NoteBalanceRoute(props: NoteBalanceRouteProps) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField type="text" label="Note Commitment" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                <TextField type="text" label="View Key (Commitment)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     props.setNoteCommitment(event.target.value);
                 }}></TextField>
             </Stack>
@@ -272,7 +337,7 @@ function NoteBalanceRoute(props: NoteBalanceRouteProps) {
                 <Button variant="contained">View Balance</Button>
             </Stack>
 
-            <RouteFooter></RouteFooter>
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
 }
