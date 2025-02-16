@@ -7,21 +7,34 @@ import { poseidon1, poseidon2 } from "poseidon-bls12381";
 
 import { groth16 } from "snarkjs"
 import crypto from "crypto";
+import * as ecc from "tiny-secp256k1";
+import { BIP32Factory } from "bip32";
+
 
 import Buff from "node:buffer";
 
 const Buffer = Buff.Buffer;
 
-export function rbigint(): bigint { return utils.leBuff2int(crypto.randomBytes(31)) };
+
+export function rbigint(): bigint { return utils.leBuff2int(crypto.randomBytes(32)) };
 
 
 // Generates the proofs for verification! 
-export async function generateNoteWithdrawProof({ deposit, recipient, workchain, snarkArtifacts }) {
+export async function generateNoteWithdrawProof({
+    deposit,
+    recipient,
+    workchain,
+    transferto_commitment,
+    transferto_amount,
+    utxo_commitment, snarkArtifacts }) {
     const input = {
         nullifierHash: deposit.nullifierHash,
         commitmentHash: deposit.commitment,
         recipient,
         workchain,
+        transferto_commitment,
+        transferto_amount,
+        utxo_commitment,
         // private snark inputs
         nullifier: deposit.nullifier,
         secret: deposit.secret
@@ -50,14 +63,17 @@ export async function generateNoteWithdrawProof({ deposit, recipient, workchain,
  * @returns True if the proof is valid, false otherwise.
  */
 
-export function verifyFourPublicSignals(verificationKey, { proof, publicSignals }) {
+export function verifyPublicSignals(verificationKey, { proof, publicSignals }) {
     return groth16.verify(
         verificationKey,
         [
             publicSignals[0],
             publicSignals[1],
             publicSignals[2],
-            publicSignals[3]
+            publicSignals[3],
+            publicSignals[4],
+            publicSignals[5],
+            publicSignals[6],
 
         ],
         proof
@@ -74,12 +90,24 @@ export function generateNullifierHash(nullifier) {
     return poseidon1([BigInt(nullifier)])
 }
 
-export async function deposit({ currency, amount }) {
+export async function deposit({ currency }) {
     const deposit = await createDeposit({ nullifier: rbigint(), secret: rbigint() });
     const note = toNoteHex(deposit.preimage, 62);
-    const noteString = `jettonnote-${currency}-${amount}-${note}`
+    const noteString = `jettonnote-${currency}-${note}`
     return noteString;
 }
+
+export async function bip32derivedDeposit({ masterSecret, masterNullifier }) {
+    const bip32 = BIP32Factory(ecc);
+    const secretNode = bip32.fromSeed(utils.leInt2Buff(masterSecret))
+    const secretChild = secretNode.derive(1);
+    const nullifierNode = bip32.fromSeed(utils.leInt2Buff(masterNullifier))
+    const nullifierChild = nullifierNode.derive(1);
+    const nullifier = utils.leBuff2int(nullifierChild.privateKey);
+    const secret = utils.leBuff2int(secretChild.privateKey);
+    return createDeposit({ nullifier, secret })
+}
+
 
 /**
  * Create deposit object from secret and nullifier
@@ -90,7 +118,7 @@ async function createDeposit({ nullifier, secret }) {
     const deposit = {
         nullifier,
         secret,
-        preimage: Buffer.concat([utils.leInt2Buff(nullifier, 31), utils.leInt2Buff(secret, 31)]),
+        preimage: Buffer.concat([utils.leInt2Buff(nullifier, 32), utils.leInt2Buff(secret, 32)]),
         commitment: await generateCommitmentHash(nullifier, secret),
         nullifierHash: await generateNullifierHash(nullifier)
     }
@@ -105,7 +133,7 @@ export function toNoteHex(number, length = 32) {
 
 
 export async function parseNote(noteString) {
-    const noteRegex = /jettonnote-(?<currency>\w+)-(?<amount>[\d.]+)-0x(?<note>[0-9a-fA-F]{124})/g
+    const noteRegex = /jettonnote-(?<currency>\w+)-0x(?<note>[0-9a-fA-F]{124})/g
     const match = noteRegex.exec(noteString);
     if (!match) {
         throw new Error("Invalid Note!")
@@ -116,9 +144,7 @@ export async function parseNote(noteString) {
     const secret = utils.leBuff2int(buf.slice(31, 62));
     const deposit = await createDeposit({ nullifier, secret });
     //@ts-ignore
-    const netId = Number(match.groups.netId);
-    //@ts-ignore
-    return { currency: match.groups.currency, amount: match.groups.amount, netId, deposit }
+    return { currency: match.groups.currency, deposit }
 }
 
 
