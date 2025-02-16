@@ -16,7 +16,9 @@ import { CHAIN, TonConnectButton } from "@tonconnect/ui-react";
 import { useTonConnect } from '../hooks/useTonConnect';
 
 export type ResponsiveAppBarProps = {
-    selectPage: (index: number) => void
+    selectPage: (index: number) => void,
+    // TODO: hide the menu if the page is signup
+    hideMenu: boolean
 }
 
 
@@ -51,97 +53,65 @@ function ResponsiveAppBar(props: ResponsiveAppBarProps) {
         <AppBar position="static">
             <Container maxWidth="xl">
                 <Toolbar disableGutters>
-                    {/* <Typography
-                        variant="h6"
-                        noWrap
-                        component="a"
-                        href="#app-bar-with-responsive-menu"
-                        sx={{
-                            mr: 2,
-                            display: { xs: 'none', md: 'flex' },
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            letterSpacing: '.3rem',
-                            color: 'inherit',
-                            textDecoration: 'none',
-                        }}
-                    >
-                        Jetton Notes
-                    </Typography> */}
 
-                    <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-                        <IconButton
-                            size="large"
-                            aria-label="account of current user"
-                            aria-controls="menu-appbar"
-                            aria-haspopup="true"
-                            onClick={handleOpenNavMenu}
-                            color="inherit"
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Menu
-                            id="menu-appbar"
-                            anchorEl={anchorElNav}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'left',
-                            }}
-                            keepMounted
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'left',
-                            }}
-                            open={Boolean(anchorElNav)}
-                            onClose={handleCloseNavMenu}
-                            sx={{ display: { xs: 'block', md: 'none' } }}
-                        >
-                            {pages.map((page) => (
-                                <MenuItem key={page} onClick={pageSelectClicked(page)}>
-                                    <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
-                                </MenuItem>
-                            ))}
-                        </Menu>
-                    </Box>
-                    {/* <Typography
-                        variant="h5"
-                        noWrap
-                        component="a"
-                        href="#app-bar-with-responsive-menu"
-                        sx={{
-                            mr: 2,
-                            display: { xs: 'flex', md: 'none' },
-                            flexGrow: 1,
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            letterSpacing: '.3rem',
-                            color: 'inherit',
-                            textDecoration: 'none',
-                        }}
-                    >
-                        Jetton Notes
-                    </Typography> */}
-                    <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                        {pages.map((page) => (
-                            <Button
-                                key={page}
-                                onClick={pageSelectClicked(page)}
-                                sx={{ my: 2, color: 'white', display: 'block' }}
+                    {props.hideMenu ? null : (
+                        <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+                            <IconButton
+                                size="large"
+                                aria-label="account of current user"
+                                aria-controls="menu-appbar"
+                                aria-haspopup="true"
+                                onClick={handleOpenNavMenu}
+                                color="inherit"
                             >
-                                {page}
-                            </Button>
-                        ))}
-                    </Box>
-                    <Box sx={{ flexGrow: 0, display: "flex", flexDirection: "row", gap: 1 }}>
-                        <h4>{network
-                            ? network === CHAIN.MAINNET
-                                ? "mainnet"
-                                : "testnet"
-                            : "N/A"}</h4>
-                        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                            <TonConnectButton></TonConnectButton>
-                        </Box>
-                    </Box>
+                                <MenuIcon />
+                            </IconButton>
+                            <Menu
+                                id="menu-appbar"
+                                anchorEl={anchorElNav}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'left',
+                                }}
+                                keepMounted
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'left',
+                                }}
+                                open={Boolean(anchorElNav)}
+                                onClose={handleCloseNavMenu}
+                                sx={{ display: { xs: 'block', md: 'none' } }}
+                            >
+                                {pages.map((page) => (
+                                    <MenuItem key={page} onClick={pageSelectClicked(page)}>
+                                        <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
+                                    </MenuItem>
+                                ))}
+                            </Menu>
+                        </Box>)}
+                    {props.hideMenu ? <Box></Box> :
+                        (<Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+                            {pages.map((page) => (
+                                <Button
+                                    key={page}
+                                    onClick={pageSelectClicked(page)}
+                                    sx={{ my: 2, color: 'white', display: 'block' }}
+                                >
+                                    {page}
+                                </Button>
+                            ))}
+                        </Box>)}
+                    {props.hideMenu ? null :
+                        <Box sx={{ flexGrow: 0, display: "flex", flexDirection: "row", gap: 1 }}>
+                            <h4>{network
+                                ? network === CHAIN.MAINNET
+                                    ? "mainnet"
+                                    : "testnet"
+                                : "N/A"}</h4>
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                <TonConnectButton></TonConnectButton>
+                            </Box>
+                        </Box>}
                 </Toolbar>
             </Container>
         </AppBar>
