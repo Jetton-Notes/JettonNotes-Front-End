@@ -5,7 +5,9 @@ import { parseNote, toNoteHex } from "../../../crypto/cryptonotes";
 
 
 export type ShowNoteSecretPageProps = {
-    noteString: string
+    noteString: string,
+    navigateToDeposit: () => void,
+    setNoteCommitment: (to: string) => void
 }
 
 export function ShowNoteSecret(props: ShowNoteSecretPageProps) {
@@ -21,11 +23,15 @@ export function ShowNoteSecret(props: ShowNoteSecretPageProps) {
         getCommitment()
     })
 
+    function clickDeposit() {
+        props.navigateToDeposit();
+        props.setNoteCommitment(commitment);
+    }
 
     return <Box >
         <Paper sx={{ maxWidth: 936, margin: "auto", overflow: "hidden", mt: "10px" }}>
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Typography component="h1" variant="h4">Jetton Notes</Typography>
+                <Typography component="h1" variant="h4">Jetton Note Secrets</Typography>
             </Stack>
             <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
                 <Typography component="p" variant="subtitle1">You can see the Jetton Note here. Copy it.</Typography>
@@ -51,7 +57,7 @@ export function ShowNoteSecret(props: ShowNoteSecretPageProps) {
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button disabled={!copiedSecret} variant="contained" onClick={() => { }}>Deposit Jettons</Button>                </Stack>
+                <Button disabled={!copiedSecret} variant="contained" onClick={() => clickDeposit()}>Go to Deposit</Button>                </Stack>
             <RouteFooter content="The secret is used for withdrawing the value. Keep it confidential. If you lose your secret, there is no way to recover the deposit!" ></RouteFooter>
         </Paper >
     </Box >
