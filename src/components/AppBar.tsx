@@ -10,19 +10,21 @@ import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 
-const pages = ['Create Note', 'Pay to Note', 'Redeem Note', 'Note Balance'];
 
 import { CHAIN, TonConnectButton } from "@tonconnect/ui-react";
 import { useTonConnect } from '../hooks/useTonConnect';
+import { DecryptedRoutes } from './Base';
+
 
 export type ResponsiveAppBarProps = {
-    selectPage: (index: number) => void,
-    // TODO: hide the menu if the page is signup
+    selectPage: (route: DecryptedRoutes) => void,
     hideMenu: boolean
 }
 
 
 function ResponsiveAppBar(props: ResponsiveAppBarProps) {
+    const pages = [DecryptedRoutes.CREATE, DecryptedRoutes.PAYTO, DecryptedRoutes.REDEEM, DecryptedRoutes.NOTEBALANCE, DecryptedRoutes.HDWALLET];
+
     const { network } = useTonConnect();
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -43,9 +45,8 @@ function ResponsiveAppBar(props: ResponsiveAppBarProps) {
         setAnchorElUser(null);
     };
 
-    const pageSelectClicked = (page: string) => () => {
-        console.log("click")
-        props.selectPage(pages.indexOf(page));
+    const pageSelectClicked = (page: DecryptedRoutes) => () => {
+        props.selectPage(page);
         setAnchorElNav(null);
     }
 
