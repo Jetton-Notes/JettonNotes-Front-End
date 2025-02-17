@@ -11,6 +11,7 @@ import {
     SendMode,
     toNano,
 } from '@ton/core';
+import { JETTONNOTES_ADDRESS } from '../constants';
 
 export type JettonWalletConfig = object;
 
@@ -65,6 +66,9 @@ export class JettonWallet implements Contract {
             .storeMaybeRef(forwardPayload)
             .endCell();
     }
+
+    //TODO: THIS HAS A HARDCODED JETTONNOTES_ADDRESS FOR NOW
+    //THE REASON FOR IT IS BECAUSE WHEN I PASS ADDRESS IT WAS DOING ERROR OTHERWISE
     async sendTransfer(
         provider: ContractProvider,
         via: Sender,
@@ -80,7 +84,7 @@ export class JettonWallet implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: JettonWallet.transferMessage(
                 jetton_amount,
-                to,
+                Address.parse(JETTONNOTES_ADDRESS),
                 responseAddress,
                 customPayload,
                 forward_ton_amount,
