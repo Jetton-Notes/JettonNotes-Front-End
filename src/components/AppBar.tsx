@@ -18,7 +18,8 @@ import { DecryptedRoutes } from './Base';
 
 export type ResponsiveAppBarProps = {
     selectPage: (route: DecryptedRoutes) => void,
-    hideMenu: boolean
+    hideMenu: boolean,
+    onLogout: () => void
 }
 
 
@@ -48,6 +49,10 @@ function ResponsiveAppBar(props: ResponsiveAppBarProps) {
     const pageSelectClicked = (page: DecryptedRoutes) => () => {
         props.selectPage(page);
         setAnchorElNav(null);
+    }
+
+    const logOutClicked = () => {
+        props.onLogout();
     }
 
     return (
@@ -88,6 +93,9 @@ function ResponsiveAppBar(props: ResponsiveAppBarProps) {
                                         <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
                                     </MenuItem>
                                 ))}
+                                <MenuItem key={"logout"} onClick={() => logOutClicked()}>
+                                    <Typography sx={{ textAlign: "center" }}>Logout</Typography>
+                                </MenuItem>
                             </Menu>
                         </Box>)}
                     {props.hideMenu ? <Box></Box> :
@@ -101,6 +109,11 @@ function ResponsiveAppBar(props: ResponsiveAppBarProps) {
                                     {page}
                                 </Button>
                             ))}
+                            <Button
+                                key="logout"
+                                onClick={() => logOutClicked()}
+                                sx={{ my: 2, color: "white", display: "block" }}
+                            >Logout</Button>
                         </Box>)}
                     {props.hideMenu ? null :
                         <Box sx={{ flexGrow: 0, display: "flex", flexDirection: "row", gap: 1 }}>
