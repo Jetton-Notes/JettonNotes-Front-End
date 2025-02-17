@@ -16,17 +16,14 @@ export function RedeemRoute(props: RedeemRouteProps) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                    <TextField type="text" label="Jetton Note Secret" value={props.noteString} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                        props.setNoteString(event.target.value);
-                    }}></TextField>
-                </Stack>
+                <TextField sx={{ width: "80% " }} type="text" label="Jetton Note Secret" value={props.noteString} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    props.setNoteString(event.target.value);
+                }}></TextField>
+
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Redeem Note</Button>                </Stack>
-
-
+                <Button variant="contained">Redeem Note</Button></Stack>
             <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
