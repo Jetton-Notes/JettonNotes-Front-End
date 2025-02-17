@@ -80,21 +80,21 @@ export async function getAccountIdentifier() {
             return {
                 success: true,
                 error: "",
-                cipherText: res
+                res: res
             }
         }
 
         return {
             success: false,
             error: "not found",
-            cipherText: ""
+            res: ""
         }
 
     } catch (err) {
         return {
             success: false,
             error: "threw error",
-            cipherText: ""
+            res: ""
         }
     }
 }
@@ -108,7 +108,9 @@ export async function getGiftCard(account_id: string, commitment: string) { }
 
 
 //Get them all with keys an filter...
-export async function GetAllGiftCards() { }
+export async function getAllGiftCards(account_id: string) {
+  //Filter by keys that contain the account_id string
+}
 
 
 //TODO: the utxos should be stored indexed in the order they are derived
