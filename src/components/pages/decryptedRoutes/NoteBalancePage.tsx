@@ -5,7 +5,8 @@ export type NoteBalanceRouteProps = {
     noteCommitment: string,
     setNoteCommitment: (to: string) => void,
     jettonBalance: string,
-    jettonTicker: string
+    jettonTicker: string,
+    fetchBalance: (balanceOf: string) => Promise<void>
 }
 
 export function NoteBalanceRoute(props: NoteBalanceRouteProps) {
@@ -23,13 +24,13 @@ export function NoteBalanceRoute(props: NoteBalanceRouteProps) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField type="text" label="View Key (Commitment)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                <TextField sx={{ width: "80%" }} type="text" label="View Key (Commitment)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     props.setNoteCommitment(event.target.value);
                 }}></TextField>
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">View Balance</Button>
+                <Button onClick={async () => await props.fetchBalance(props.noteCommitment)} variant="contained">View Balance</Button>
             </Stack>
 
             <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
