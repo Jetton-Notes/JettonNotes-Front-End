@@ -16,15 +16,18 @@ import { BackupSecrets } from "./pages/encryptedRoutes/BackuptSecrets";
 import { ImportSecrets } from "./pages/encryptedRoutes/ImportSecrets";
 import { getAccountIdentifier, getAccountKey } from "../storage";
 import { decryptData, Status } from "../crypto/encrypt";
+import { HdWallet } from "./pages/decryptedRoutes/HdWallet";
+import { SPLASHSCREENTIME } from "../constants";
 
 const theme = getTheme();
 
 export enum DecryptedRoutes {
-    CREATE = "CREATE",
-    PAYTO = "PAYTO",
-    REDEEM = "REDEEM",
-    NOTEBALANCE = "NOTEBALANCE",
+    CREATE = "Crypto Note",
+    PAYTO = "Pay to Note",
+    REDEEM = "Redeem Note",
+    NOTEBALANCE = "Note Balance",
     SHOWNOTESECRET = "SHOWNOTESECRET",
+    HDWALLET = "HD Wallet"
 }
 
 export enum EncryptedRoutes {
@@ -39,6 +42,7 @@ export default function Base() {
     const [hideMenu, setHideMenu] = React.useState(true);
 
     const [password, setPassword] = React.useState("");
+    const [accountId, setAccountId] = React.useState("");
     const [decryptedAccount, setDecryptedAccmount] = React.useState();
     const [showDecryptedRoutes, setShowDecryptedRoutes] = React.useState(false);
 
@@ -70,9 +74,7 @@ export default function Base() {
                 //Account id not found , there is no account
                 setLoggedOutRoutes(EncryptedRoutes.NEWACCOUNT);
             }
-
-
-        }, 2000)
+        }, SPLASHSCREENTIME)
     }, [])
 
 
@@ -96,7 +98,7 @@ export default function Base() {
         openSnackbar(msg);
     }
 
-    const createNoteClicked = async (amount: string) => {
+    const createNoteClicked = async () => {
         const noteString = await deposit({ currency: "tgBTC" });
         setNoteString(noteString);
         setCurrentDecryptedRoute(DecryptedRoutes.SHOWNOTESECRET)
@@ -117,6 +119,8 @@ export default function Base() {
             openSnackbar("Account not found");
             return;
         }
+        const account_id = await getAccountIdentifier();
+        setAccountId(account_id.res)
         setShowDecryptedRoutes(true);
         setHideMenu(false);
     }
@@ -155,8 +159,6 @@ export default function Base() {
             case DecryptedRoutes.CREATE:
                 return <CreateRoute
                     onNotify={onNotify}
-                    depositAmount={depositAmount}
-                    setDepositAmount={setDepositAmount}
                     createNoteClicked={createNoteClicked}
                 ></CreateRoute>
             case DecryptedRoutes.PAYTO:
@@ -166,35 +168,18 @@ export default function Base() {
             case DecryptedRoutes.NOTEBALANCE:
                 return <NoteBalanceRoute jettonBalance={jettonBalance} jettonTicker={jettonTicker} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></NoteBalanceRoute>
             case DecryptedRoutes.SHOWNOTESECRET:
-                return <ShowNoteSecret noteString={noteString}></ShowNoteSecret>
+                return <ShowNoteSecret setNoteCommitment={setNoteCommitment} navigateToDeposit={() => setCurrentDecryptedRoute(DecryptedRoutes.PAYTO)} noteString={noteString}></ShowNoteSecret>
+            case DecryptedRoutes.HDWALLET:
+                return <HdWallet account_id={accountId}></HdWallet>
             default:
                 return <div>Invalid route</div>
         }
     }
 
-    const selectPage = (indx: number) => {
+    const selectPage = (page: DecryptedRoutes) => {
         setDepositAmount("");
         setNoteCommitment("");
-
-        switch (indx) {
-            case 0:
-                setCurrentDecryptedRoute(DecryptedRoutes.CREATE);
-                break;
-            case 1:
-                setCurrentDecryptedRoute(DecryptedRoutes.PAYTO);
-                break;
-            case 2:
-                setCurrentDecryptedRoute(DecryptedRoutes.REDEEM);
-                break;
-            case 3:
-                setCurrentDecryptedRoute(DecryptedRoutes.NOTEBALANCE);
-                break;
-            case 4:
-                setCurrentDecryptedRoute(DecryptedRoutes.SHOWNOTESECRET);
-                break;
-            default:
-                break;
-        }
+        setCurrentDecryptedRoute(page)
     }
 
     const snackBarAction = (
