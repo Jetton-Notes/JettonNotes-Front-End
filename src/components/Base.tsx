@@ -18,6 +18,12 @@ import { getAccountIdentifier, getAccountKey } from "../storage";
 import { decryptData, Status } from "../crypto/encrypt";
 import { HdWallet } from "./pages/decryptedRoutes/HdWallet";
 import { SPLASHSCREENTIME } from "../constants";
+import { HdWalletUtxos } from "./pages/decryptedRoutes/HDWalletUtxos";
+import { useTonClient } from "../hooks/useTonClient";
+import { useTonConnect } from "../hooks/useTonConnect";
+import { CHAIN } from "@tonconnect/protocol";
+import { depositJettons, getCommitmentBalance, getDepositWithdrawContract, getJettonWalletClient } from "../actions/depositJettons";
+import { Address, toNano } from "@ton/core";
 
 const theme = getTheme();
 
@@ -27,7 +33,8 @@ export enum DecryptedRoutes {
     REDEEM = "Redeem Note",
     NOTEBALANCE = "Note Balance",
     SHOWNOTESECRET = "SHOWNOTESECRET",
-    HDWALLET = "HD Wallet"
+    HDWALLET = "HD Wallet",
+    HDWALLETUTXOS = "HDWALLETUTXOS"
 }
 
 export enum EncryptedRoutes {
@@ -39,6 +46,10 @@ export enum EncryptedRoutes {
 }
 
 export default function Base() {
+    const { wallet, sender, network } = useTonConnect();
+    const { client } = useTonClient();
+
+
     const [hideMenu, setHideMenu] = React.useState(true);
 
     const [password, setPassword] = React.useState("");
@@ -153,6 +164,79 @@ export default function Base() {
         }
     }
 
+    const depositValueClicked = async (_depositAmount: string, commitment: string) => {
+
+        if (!wallet) {
+            openSnackbar("Wallet is not connected");
+            return;
+        }
+
+        if (!client) {
+            openSnackbar("Unable to connect");
+            return;
+        }
+
+        if (network !== CHAIN.TESTNET) {
+            openSnackbar("Only testnet is supported");
+            return;
+        }
+
+        if (parseFloat(_depositAmount) <= 0) {
+            openSnackbar("Invalid deposit amount");
+            return;
+        }
+
+        try {
+            if (BigInt(commitment) <= 0) {
+                openSnackbar("Invalid commitment");
+                return;
+            }
+        } catch (err) {
+            openSnackbar("Invalid commitment entered");
+            return;
+        }
+
+        const jettonWalletClient = await getJettonWalletClient(client, wallet);
+
+        console.log(jettonWalletClient);
+
+        const depositWithdrawContract = getDepositWithdrawContract(client);
+
+
+
+
+        //TODO: now get the jetton wallet of the connected wallet
+
+        //TODO: then check the jetton balance of the wallet
+
+        //TODO: then do the depoist via jetton
+
+        console.log(_depositAmount)
+        const res = await depositJettons(
+            BigInt(commitment),
+            toNano(_depositAmount),
+            jettonWalletClient,
+            //@ts-ignore
+            sender,
+            depositWithdrawContract,
+            Address.parse(wallet)
+        );
+
+        console.log(res);
+    }
+
+
+    async function fetchBalance(_commitment: string) {
+        if (!client) {
+            openSnackbar("Unable to connect. Connect your wallet.");
+            return;
+        }
+
+        const balance = await getCommitmentBalance(client, BigInt(_commitment));
+        console.log(balance);
+    }
+
+
 
     const getDecryptedRoutes = () => {
         switch (currentDecryptedRoute) {
@@ -162,15 +246,17 @@ export default function Base() {
                     createNoteClicked={createNoteClicked}
                 ></CreateRoute>
             case DecryptedRoutes.PAYTO:
-                return <PayToRoute depositAmount={depositAmount} setDepositAmount={setDepositAmount} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></PayToRoute>
+                return <PayToRoute depositClicked={depositValueClicked} depositAmount={depositAmount} setDepositAmount={setDepositAmount} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></PayToRoute>
             case DecryptedRoutes.REDEEM:
                 return <RedeemRoute noteString={noteString} setNoteString={setNoteString}></RedeemRoute>
             case DecryptedRoutes.NOTEBALANCE:
-                return <NoteBalanceRoute jettonBalance={jettonBalance} jettonTicker={jettonTicker} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></NoteBalanceRoute>
+                return <NoteBalanceRoute fetchBalance={fetchBalance} jettonBalance={jettonBalance} jettonTicker={jettonTicker} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></NoteBalanceRoute>
             case DecryptedRoutes.SHOWNOTESECRET:
                 return <ShowNoteSecret setNoteCommitment={setNoteCommitment} navigateToDeposit={() => setCurrentDecryptedRoute(DecryptedRoutes.PAYTO)} noteString={noteString}></ShowNoteSecret>
             case DecryptedRoutes.HDWALLET:
-                return <HdWallet account_id={accountId}></HdWallet>
+                return <HdWallet showUTXOsPage={() => setCurrentDecryptedRoute(DecryptedRoutes.HDWALLETUTXOS)} account_id={accountId}></HdWallet>
+            case DecryptedRoutes.HDWALLETUTXOS:
+                return <HdWalletUtxos account_id={accountId}></HdWalletUtxos>
             default:
                 return <div>Invalid route</div>
         }
@@ -180,6 +266,13 @@ export default function Base() {
         setDepositAmount("");
         setNoteCommitment("");
         setCurrentDecryptedRoute(page)
+    }
+
+    const onLogout = () => {
+        setHideMenu(true);
+        setLoggedOutRoutes(EncryptedRoutes.ENTERPASSWORD);
+        setPassword("");
+        setShowDecryptedRoutes(false);
     }
 
     const snackBarAction = (
@@ -199,7 +292,7 @@ export default function Base() {
         <Box sx={{ display: "fle    x", minHeight: "100vh" }}>
             <CssBaseline />
             <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                <ResponsiveAppBar hideMenu={hideMenu} selectPage={selectPage}></ResponsiveAppBar>
+                <ResponsiveAppBar onLogout={onLogout} hideMenu={hideMenu} selectPage={selectPage}></ResponsiveAppBar>
                 {showDecryptedRoutes ? getDecryptedRoutes() : getCreateAccountRoutes()}
             </Box>
         </Box>
