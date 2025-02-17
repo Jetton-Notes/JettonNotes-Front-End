@@ -108,17 +108,17 @@ async function encrypt(startblob: Blob, passwd: string) {
         return;
     }
 
-    cipherBytes = new Uint8Array(cipherBytes);
+    cipherBytes = new Uint8Array(cipherBytes) as Uint8Array;
 
-    const resultBytes = new Uint8Array(cipherBytes.length + 16);
+    const resultBytes = new Uint8Array((cipherBytes as Uint8Array).length + 16);
     resultBytes.set(new TextEncoder().encode("Salted__"));
     resultBytes.set(pbkdf2salt, 8);
-    resultBytes.set(cipherBytes, 16);
+    resultBytes.set(cipherBytes as Uint8Array, 16);
     return resultBytes;
 }
 
 
-
+//@ts-ignore
 async function decrypt(
     cipherbytes: ArrayBuffer,
     passwd: string,
@@ -176,9 +176,9 @@ async function decrypt(
         onError("Error Decrypting File, Wrong password.");
     }
 
-    plaintextbytes = new Uint8Array(plaintextbytes);
+    plaintextbytes = new Uint8Array(plaintextbytes as ArrayBufferLike);
 
-    return plaintextbytes;
+    return plaintextbytes as Uint8Array;
 }
 
 export function decodeUint8Array(uint8array: Uint8Array): string {
