@@ -6,7 +6,8 @@ export type PayToRoute = {
     depositAmount: string,
     setDepositAmount: (to: string) => void,
     noteCommitment: string,
-    setNoteCommitment: (to: string) => void
+    setNoteCommitment: (to: string) => void,
+    depositClicked: (val: string, commitment: string) => Promise<void>
 }
 
 export function PayToRoute(props: PayToRoute) {
@@ -20,20 +21,19 @@ export function PayToRoute(props: PayToRoute) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField type="text" label="Note Commitment (View Key)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                <TextField sx={{ width: "80%" }} type="text" label="Note Commitment (View Key)" value={props.noteCommitment} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     props.setNoteCommitment(event.target.value);
                 }}></TextField>
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField type="number" label="Deposit Amount" value={props.depositAmount} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                <TextField sx={{ width: "80%" }} type="number" label="Deposit Amount" value={props.depositAmount} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     props.setDepositAmount(event.target.value);
                 }}></TextField>
-
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Deposit Value</Button>
+                <Button variant="contained" onClick={async () => await props.depositClicked(props.depositAmount, props.noteCommitment)}>Deposit Value</Button>
             </Stack>
 
             <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
