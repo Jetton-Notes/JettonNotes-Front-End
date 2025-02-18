@@ -38,7 +38,7 @@ export function ShowNoteSecret(props: ShowNoteSecretPageProps) {
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <div>View Key (commitment) used for checking balance:</div>
+                <div>The Commitment, used for depositing and checking balance:</div>
             </Stack>
             <pre style={{ overflow: "auto", maxWidth: "80%", margin: "0 auto" }}>{commitment}</pre>
 
