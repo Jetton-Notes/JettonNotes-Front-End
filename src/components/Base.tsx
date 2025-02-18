@@ -18,22 +18,22 @@ import { getAccountIdentifier, getAccountKey } from "../storage";
 import { decryptData, Status } from "../crypto/encrypt";
 import { HdWallet } from "./pages/decryptedRoutes/HdWallet";
 import { SPLASHSCREENTIME } from "../constants";
-import { HdWalletUtxos } from "./pages/decryptedRoutes/HDWalletUtxos";
 import { useTonClient } from "../hooks/useTonClient";
 import { useTonConnect } from "../hooks/useTonConnect";
 import { CHAIN } from "@tonconnect/protocol";
 import { depositJettons, getCommitmentBalance, getDepositWithdrawContract, getJettonWalletClient } from "../actions/depositJettons";
-import { Address, toNano } from "@ton/core";
+import { Address, fromNano, toNano } from "@ton/core";
+import { redeemjettons } from "../actions/redeemJettons";
 
 const theme = getTheme();
 
 export enum DecryptedRoutes {
-    CREATE = "Crypto Note",
+    CREATE = "Burner Wallet",
     PAYTO = "Pay to Note",
     REDEEM = "Redeem Note",
     NOTEBALANCE = "Note Balance",
     SHOWNOTESECRET = "SHOWNOTESECRET",
-    HDWALLET = "HD Wallet",
+    HDWALLET = "Wallet",
     HDWALLETUTXOS = "HDWALLETUTXOS"
 }
 
@@ -122,8 +122,6 @@ export default function Base() {
             if (data.status === Status.Failure) {
                 openSnackbar("Invalid password unable to decrypt account!")
                 return;
-            } else {
-                console.log(data);
             }
 
         } else {
@@ -198,21 +196,9 @@ export default function Base() {
 
         const jettonWalletClient = await getJettonWalletClient(client, wallet);
 
-        console.log(jettonWalletClient);
-
         const depositWithdrawContract = getDepositWithdrawContract(client);
 
-
-
-
-        //TODO: now get the jetton wallet of the connected wallet
-
-        //TODO: then check the jetton balance of the wallet
-
-        //TODO: then do the depoist via jetton
-
-        console.log(_depositAmount)
-        const res = await depositJettons(
+        await depositJettons(
             BigInt(commitment),
             toNano(_depositAmount),
             jettonWalletClient,
@@ -222,7 +208,7 @@ export default function Base() {
             Address.parse(wallet)
         );
 
-        console.log(res);
+
     }
 
 
@@ -232,8 +218,80 @@ export default function Base() {
             return;
         }
 
-        const balance = await getCommitmentBalance(client, BigInt(_commitment));
-        console.log(balance);
+        if (_commitment.length < 10) {
+            openSnackbar("Invalid View Key")
+            return;
+        }
+
+        try {
+
+            const balance = await getCommitmentBalance(client, BigInt(_commitment));
+            setJettonBalance(fromNano(balance.depositAmount));
+            if (balance.nullifier !== 0n) {
+
+                openSnackbar("Jetton note is nullified. It was withdrawn and not valid anymore.")
+            } else {
+                openSnackbar("Balance is " + fromNano(balance.depositAmount) + jettonTicker)
+            }
+        } catch (err: any) {
+            setJettonBalance("0");
+            if (err.message === "Unable to execute get method. Got exit_code: 258") {
+                openSnackbar("Missing deposit.")
+            } else {
+                openSnackbar("Unable to check deposit.")
+
+            }
+
+
+
+        }
+    }
+
+    async function redeemClicked() {
+        if (!client) {
+            openSnackbar("Unable to connect. Connect your wallet.");
+            return;
+        }
+
+        let deposit;
+
+        try {
+            deposit = await parseNote(noteString);
+        } catch (err) {
+            openSnackbar("Invalid note")
+            return;
+        }
+
+        if (!deposit) {
+            openSnackbar("Invalid note, can't process it")
+            return;
+        }
+        try {
+            const balance = await getCommitmentBalance(client, deposit.deposit.commitment);
+            if (balance.nullifier !== 0n) {
+                openSnackbar("The note is nullified");
+                return;
+            }
+            if (balance.depositAmount === 0n) {
+                openSnackbar("The note holds no deposit");
+                return;
+            }
+        } catch (err: any) {
+            if (err.message === "Unable to execute get method. Got exit_code: 258") {
+                openSnackbar("Missing deposit.")
+            } else {
+                openSnackbar("Unable to check deposit.")
+            }
+            return;
+        }
+
+        await redeemjettons(
+            client,
+            //@ts-ignore
+            sender,
+            noteString,
+            wallet);
+
     }
 
 
@@ -248,15 +306,13 @@ export default function Base() {
             case DecryptedRoutes.PAYTO:
                 return <PayToRoute depositClicked={depositValueClicked} depositAmount={depositAmount} setDepositAmount={setDepositAmount} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></PayToRoute>
             case DecryptedRoutes.REDEEM:
-                return <RedeemRoute noteString={noteString} setNoteString={setNoteString}></RedeemRoute>
+                return <RedeemRoute redeemClicked={() => redeemClicked()} noteString={noteString} setNoteString={setNoteString}></RedeemRoute>
             case DecryptedRoutes.NOTEBALANCE:
                 return <NoteBalanceRoute fetchBalance={fetchBalance} jettonBalance={jettonBalance} jettonTicker={jettonTicker} noteCommitment={noteCommitment} setNoteCommitment={setNoteCommitment}></NoteBalanceRoute>
             case DecryptedRoutes.SHOWNOTESECRET:
                 return <ShowNoteSecret setNoteCommitment={setNoteCommitment} navigateToDeposit={() => setCurrentDecryptedRoute(DecryptedRoutes.PAYTO)} noteString={noteString}></ShowNoteSecret>
             case DecryptedRoutes.HDWALLET:
-                return <HdWallet showUTXOsPage={() => setCurrentDecryptedRoute(DecryptedRoutes.HDWALLETUTXOS)} account_id={accountId}></HdWallet>
-            case DecryptedRoutes.HDWALLETUTXOS:
-                return <HdWalletUtxos account_id={accountId}></HdWalletUtxos>
+                return <HdWallet password={password} showUTXOsPage={() => setCurrentDecryptedRoute(DecryptedRoutes.HDWALLETUTXOS)} account_id={accountId}></HdWallet>
             default:
                 return <div>Invalid route</div>
         }
@@ -264,7 +320,7 @@ export default function Base() {
 
     const selectPage = (page: DecryptedRoutes) => {
         setDepositAmount("");
-        setNoteCommitment("");
+        // setNoteCommitment("");
         setCurrentDecryptedRoute(page)
     }
 

@@ -2,7 +2,8 @@ import { Button, Box, Typography, Paper, TextField, Stack } from "@mui/material"
 import { RouteFooter } from "../../Footer";
 export type RedeemRouteProps = {
     noteString: string,
-    setNoteString: (to: string) => void
+    setNoteString: (to: string) => void,
+    redeemClicked: () => Promise<void>
 }
 
 export function RedeemRoute(props: RedeemRouteProps) {
@@ -23,7 +24,7 @@ export function RedeemRoute(props: RedeemRouteProps) {
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Redeem Note</Button></Stack>
+                <Button onClick={() => props.redeemClicked()} variant="contained">Redeem Note</Button></Stack>
             <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
