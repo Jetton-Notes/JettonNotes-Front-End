@@ -1,4 +1,6 @@
-# twa-template
+# Jetton Notes - Front End 
+
+COMIGN SOON
 
 > Starter template for a new TWA interacting with the TON blockchain
 
