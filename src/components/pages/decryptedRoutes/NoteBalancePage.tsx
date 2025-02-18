@@ -20,7 +20,7 @@ export function NoteBalanceRoute(props: NoteBalanceRouteProps) {
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <div>{props.jettonBalance} {props.jettonTicker}</div>
+                <Typography component="h1" variant="h5">{props.jettonBalance} {props.jettonTicker}</Typography>
             </Stack>
 
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
