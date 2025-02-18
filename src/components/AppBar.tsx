@@ -24,7 +24,7 @@ export type ResponsiveAppBarProps = {
 
 
 function ResponsiveAppBar(props: ResponsiveAppBarProps) {
-    const pages = [DecryptedRoutes.CREATE, DecryptedRoutes.PAYTO, DecryptedRoutes.REDEEM, DecryptedRoutes.NOTEBALANCE, DecryptedRoutes.HDWALLET];
+    const pages = [DecryptedRoutes.HDWALLET, DecryptedRoutes.PAYTO, DecryptedRoutes.REDEEM, DecryptedRoutes.CREATE, DecryptedRoutes.NOTEBALANCE];
 
     const { network } = useTonConnect();
 
