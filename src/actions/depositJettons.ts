@@ -33,20 +33,16 @@ export async function depositJettons(
 ) {
     const payload = depositJettonsForwardPayload({ commitment });
 
-
     const depositMessageResult = await jettonWalletClient.sendTransfer(
         sender,
-        toNano("1.5"),
+        toNano("1"),
         depositedAmount,
         depositWithdrawContract.address, //TODO: This is bypassed now Send to
         senderAddress, //Response address
         beginCell().endCell(), //CustomPayload
-        toNano("1"), //Must have enough Ton to forward it...
+        toNano("0.1"), //Must have enough Ton to forward it...
         payload
     );
-
-    // console.log("here")
-
 
     return depositMessageResult;
 
