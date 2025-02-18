@@ -92,17 +92,17 @@ export function generateNullifierHash(nullifier) {
 
 export async function deposit({ currency }) {
     const deposit = await createDeposit({ nullifier: rbigint(), secret: rbigint() });
-    const note = toNoteHex(deposit.preimage, 62);
+    const note = toNoteHex(deposit.preimage, 64);
     const noteString = `jettonnote-${currency}-${note}`
     return noteString;
 }
 
-export async function bip32derivedDeposit({ masterSecret, masterNullifier }) {
+export async function bip32derivedDeposit({ masterSecret, masterNullifier, counter }) {
     const bip32 = BIP32Factory(ecc);
     const secretNode = bip32.fromSeed(utils.leInt2Buff(masterSecret))
-    const secretChild = secretNode.derive(1);
+    const secretChild = secretNode.derive(counter);
     const nullifierNode = bip32.fromSeed(utils.leInt2Buff(masterNullifier))
-    const nullifierChild = nullifierNode.derive(1);
+    const nullifierChild = nullifierNode.derive(counter);
     const nullifier = utils.leBuff2int(nullifierChild.privateKey);
     const secret = utils.leBuff2int(secretChild.privateKey);
     return createDeposit({ nullifier, secret })
