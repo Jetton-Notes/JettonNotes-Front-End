@@ -99,25 +99,62 @@ export async function getAccountIdentifier() {
     }
 }
 
-//TODO: I need to get all the gift cards
-//TODO: the encryption key for the account needs an identifier which should be part of the keys
-// Get them one by one
-export async function storeGiftCard(account_id: string, cipherText: string) {
-}
-export async function getGiftCard(account_id: string, commitment: string) { }
-
-
-//Get them all with keys an filter...
-export async function getAllGiftCards(account_id: string) {
-  //Filter by keys that contain the account_id string
+export async function getAllUTXOs(account_id: string) {
+    const allKeys = await keys();
+    let results = [];
+    for (let i = 0; i < allKeys.length; i++) {
+        if (allKeys[i].toString().startsWith(account_id)) {
+            results.push(allKeys[i]);
+        }
+    }
+    return results;
 }
 
+//TODO: I need to encrypt the notes before I save them...
+export async function saveManyUTXOs(keys: string[], values: { index: number, ciphertext: string, commitment: string }) {
+}
 
-//TODO: the utxos should be stored indexed in the order they are derived
+export async function getLastAddressUTXOIndex(): Promise<{ success: boolean, data: number, error: string }> {
+    try {
+        const key = `last-utxo`;
 
-export async function storeUTXOs(account_id: string, commitment: string, cipherText: string) { }
+        const res = await get(key);
 
-export async function getUTXOs(account_id: string, commitment: string) { }
+        if (res) {
+            return {
+                success: true,
+                error: "",
+                data: res
+            }
+        }
+        return {
+            success: false,
+            error: "not found",
+            data: -1
+        }
 
-export async function getAllUTXOs(account_id: string) { }
+    } catch (err) {
+        return {
+            success: false,
+            error: "not found",
+            data: -1
+        }
 
+    }
+}
+
+export async function setLastAddressUTXOIndex(index: number) {
+    try {
+        const key = `last-utxo`;
+        await set(key, index);
+        return {
+            success: true,
+            error: ""
+        }
+    } catch (err) {
+        return {
+            success: false,
+            error: "Unable to set"
+        }
+    }
+}
