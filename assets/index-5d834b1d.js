@@ -70306,7 +70306,7 @@ To suppress this warning, you need to explicitly provide the \`palette.${a}Chann
     const a = Pme[e.toString()] || `Unknow error code: ${e}`;
     throw new TypeError(a);
   }
-  const $me = 32, jz = 65, zz = 32, Ome = 32, Ume = 32, Lme = 32, Nme = 64, Dme = "/JettonGiftCards/assets/secp256k1-c2a2ab4f.wasm", Fme = async (e = {}, a) => {
+  const $me = 32, jz = 65, zz = 32, Ome = 32, Ume = 32, Lme = 32, Nme = 64, Dme = "/JettonNotes-Front-End/assets/secp256k1-c2a2ab4f.wasm", Fme = async (e = {}, a) => {
     let t;
     if (a.startsWith("data:")) {
       const n = a.replace(/^data:.*?base64,/, "");
