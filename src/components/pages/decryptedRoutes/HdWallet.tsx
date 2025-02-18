@@ -1,7 +1,7 @@
-import { Button, Box, Typography, Paper, TextField, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Button, Box, Typography, Paper, TextField, Stack } from "@mui/material";
 import { RouteFooter } from "../../Footer";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import React from "react";
+import Info from "../../styled/Info";
 
 export type HdWalletProps = {
     account_id: string,
@@ -39,6 +39,20 @@ export function HdWallet(props: HdWalletProps) {
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Button onClick={() => props.showUTXOsPage()}>UTXOs</Button>
             </Stack>
+            <Info summary="How the UTXO wallet works?">
+                <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
+                    <Typography component="p" variant="subtitle1">The wallet uses derived addresses. You can transfer to an address multiple times but spend only once. After spending the public address changes! Jetton Notes allows you to transfer Jettons with account abstraction and pay for fees using the Jetton instead of Ton. You don't need a Ton wallet to transfer Jettons but in the relayer is down it will fall back wallet transfers. </Typography>
+                </Stack>
+                <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
+                    <Typography component="p" variant="subtitle1">
+                        Because the deposit accounts change, you can use the wallet identifier to check which masterkeys you are using.
+                    </Typography>
+                </Stack>
+                <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <pre>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
+                </Stack>
+            </Info>
+
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <TextField sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -49,30 +63,6 @@ export function HdWallet(props: HdWalletProps) {
                 <TextField sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
 
                 }}></TextField>
-            </Stack>
-            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Accordion sx={{ width: "80%" }}>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1-content"
-                        id="panel1-header"
-                    >
-                        <Typography component="span" sx={{ color: "gray" }}>How the UTXO wallet works?</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
-                            <Typography component="p" variant="subtitle1">The wallet uses derived addresses. You can transfer to an address multiple times but spend only once. After spending the public address changes! Jetton Notes allows you to transfer Jettons with account abstraction and pay for fees using the Jetton instead of Ton. You don't need a Ton wallet to transfer Jettons but in the relayer is down it will fall back wallet transfers. </Typography>
-                        </Stack>
-                        <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
-                            <Typography component="p" variant="subtitle1">
-                                Because the deposit accounts change, you can use the wallet identifier to check which masterkeys you are using.
-                            </Typography>
-                        </Stack>
-                        <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                            <pre>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
-                        </Stack>
-                    </AccordionDetails>
-                </Accordion>
             </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
