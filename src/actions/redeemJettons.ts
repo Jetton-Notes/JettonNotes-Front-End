@@ -45,7 +45,6 @@ export async function redeemjettons(
 
     const depositWithdrawClient = getDepositWithdrawContract(client);
 
-
     await depositWithdrawClient.sendWithdraw(
         sender, {
         pi_a,
@@ -55,6 +54,27 @@ export async function redeemjettons(
         value: toNano("0.15") // 0.15 Ton fee
     }
     );
+}
 
+//TODO: If the relayer is missing I fall back to another address
+export async function RelayerMissingTransferFallback(client: TonClient, sender: Sender, proof: any, publicSignals: any) {
 
+    const curve = await buildBls12381();
+    const proofProc = utils.unstringifyBigInts(proof);
+    const pi_aS = g1Compressed(curve, proofProc.pi_a);
+    const pi_bS = g2Compressed(curve, proofProc.pi_b);
+    const pi_cS = g1Compressed(curve, proofProc.pi_c);
+    const pi_a = Buffer.from(pi_aS, "hex");
+    const pi_b = Buffer.from(pi_bS, "hex");
+    const pi_c = Buffer.from(pi_cS, "hex");
+
+    const depositWithdrawClient = getDepositWithdrawContract(client);
+
+    await depositWithdrawClient.sendUtxo_Withdraw(sender, {
+        pi_a,
+        pi_b,
+        pi_c,
+        pubInputs: publicSignals,
+        value: toNano("0.15")
+    });
 }
