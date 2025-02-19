@@ -21,7 +21,7 @@ import { SPLASHSCREENTIME } from "../constants";
 import { useTonClient } from "../hooks/useTonClient";
 import { useTonConnect } from "../hooks/useTonConnect";
 import { CHAIN } from "@tonconnect/protocol";
-import { depositJettons, getCommitmentBalance, getDepositWithdrawContract, getJettonWalletClient } from "../actions/depositJettons";
+import { depositJettons, getCommitmentBalance, getCommitmentBalanceWithoutWallet, getDepositWithdrawContract, getJettonWalletClient } from "../actions/depositJettons";
 import { Address, fromNano, toNano } from "@ton/core";
 import { redeemjettons } from "../actions/redeemJettons";
 
@@ -213,10 +213,6 @@ export default function Base() {
 
 
     async function fetchBalance(_commitment: string) {
-        if (!client) {
-            openSnackbar("Unable to connect. Connect your wallet.");
-            return;
-        }
 
         if (_commitment.length < 10) {
             openSnackbar("Invalid View Key")
@@ -225,25 +221,17 @@ export default function Base() {
 
         try {
 
-            const balance = await getCommitmentBalance(client, BigInt(_commitment));
+            const balance = await getCommitmentBalanceWithoutWallet(BigInt(_commitment));
             setJettonBalance(fromNano(balance.depositAmount));
             if (balance.nullifier !== 0n) {
 
                 openSnackbar("Jetton note is nullified. It was withdrawn and not valid anymore.")
             } else {
-                openSnackbar("Balance is " + fromNano(balance.depositAmount) + jettonTicker)
+                openSnackbar("Balance is " + fromNano(balance.depositAmount) + " " + jettonTicker)
             }
         } catch (err: any) {
             setJettonBalance("0");
-            if (err.message === "Unable to execute get method. Got exit_code: 258") {
-                openSnackbar("Missing deposit.")
-            } else {
-                openSnackbar("Unable to check deposit.")
-
-            }
-
-
-
+            openSnackbar("Network error. Unable to check deposit")
         }
     }
 
@@ -285,6 +273,7 @@ export default function Base() {
             return;
         }
 
+
         await redeemjettons(
             client,
             //@ts-ignore
@@ -312,7 +301,7 @@ export default function Base() {
             case DecryptedRoutes.SHOWNOTESECRET:
                 return <ShowNoteSecret setNoteCommitment={setNoteCommitment} navigateToDeposit={() => setCurrentDecryptedRoute(DecryptedRoutes.PAYTO)} noteString={noteString}></ShowNoteSecret>
             case DecryptedRoutes.HDWALLET:
-                return <HdWallet password={password} showUTXOsPage={() => setCurrentDecryptedRoute(DecryptedRoutes.HDWALLETUTXOS)} account_id={accountId}></HdWallet>
+                return <HdWallet jettonTicker={jettonTicker} password={password} openSnackbar={openSnackbar} account_id={accountId}></HdWallet>
             default:
                 return <div>Invalid route</div>
         }
