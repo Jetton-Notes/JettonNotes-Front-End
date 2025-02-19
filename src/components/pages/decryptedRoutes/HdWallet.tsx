@@ -2,43 +2,127 @@ import { Button, Box, Typography, Paper, TextField, Stack } from "@mui/material"
 import { RouteFooter } from "../../Footer";
 import React from "react";
 import Info from "../../styled/Info";
+import { getLastAddressUTXOIndex } from "../../../storage";
+import { getNextValidWallet } from "../../../actions/generateUtxos";
+import { useTonClient } from "../../../hooks/useTonClient";
+import { toNano } from "@ton/core";
+import { getRelayerSnark } from "../../../actions/getRelayerSnark";
+import TxSummary from "../TxSummary";
 
 export type HdWalletProps = {
     account_id: string,
     password: string,
-    showUTXOsPage: () => void
+    openSnackbar: (msg: string) => void,
+    jettonTicker: string
 }
 
-//THen when it's been copied the user can make the deposit
-
-//TODO: It should fetch the index of the lastUTXO then use it to get the address with the balance
-
-//TODO: it should automatically figure out the unspent transaction out field
-
 export function HdWallet(props: HdWalletProps) {
+    const [isWalletCalibrated, setIsWalletCalibrated] = React.useState(false);
+
     const [currentAddress, setCurrentAddress] = React.useState("");
     const [walletBalance, setWalletBalance] = React.useState("0");
 
+    const [transferTo, setTransferTo] = React.useState("");
+    const [amount, setAmount] = React.useState("");
+    const [currentIndex, setCurrentIndex] = React.useState(0);
     React.useEffect(() => {
+        const checkCalibration = async () => {
+            const lastUtxoIndexFound = await getLastAddressUTXOIndex();
+            if (lastUtxoIndexFound.success === false) {
+                setIsWalletCalibrated(false)
+            } else {
+                const { fetchedBalance, commitment } = await getNextValidWallet(props.password, props.account_id, lastUtxoIndexFound.data, props.openSnackbar);
 
-        //TODO: getTheLastAddressUTXOIndex()
-        //TODO: derive the address for index, using the master key
-        //TODO: Check the balance of the UTXO
-
-
+                setWalletBalance(fetchedBalance);
+                setCurrentAddress(commitment);
+                setIsWalletCalibrated(true);
+                setCurrentIndex(lastUtxoIndexFound.data)
+            }
+        }
+        checkCalibration()
     }, [])
 
+    function copyAddress() {
+        //TODO: copy the address that was set
+        props.openSnackbar("Address copied to clipboard")
+    }
 
+    async function runCalibration() {
+        // run generate notes.. starting at 0 index
+        const { fetchedBalance, commitment, success } = await getNextValidWallet(props.password, props.account_id, 1, props.openSnackbar);
+        // and find the last valid note with or without balance..
+
+        if (success) {
+            setWalletBalance(fetchedBalance);
+            setCurrentAddress(commitment);
+            return;
+        }
+        props.openSnackbar("Unable to finish calibration")
+    }
+
+    async function transferValue() {
+
+        try {
+            BigInt(transferTo)
+        } catch (err) {
+            props.openSnackbar("Invalid Transfer To entered.")
+            return;
+        }
+
+        if (BigInt(transferTo) === 0n) {
+            props.openSnackbar("Invalid transfer to");
+            return;
+        }
+
+        if (isNaN(parseFloat(amount))) {
+            props.openSnackbar("Invalid balance entered");
+            return;
+        }
+
+        if (parseFloat(amount) <= 0) {
+            props.openSnackbar("Unable to transfer zero balance");
+            return;
+        }
+
+        if (toNano(walletBalance) < toNano(amount)) {
+            props.openSnackbar("Not enough balance")
+            return;
+        }
+
+        if (currentIndex === 0) {
+            return;
+        }
+
+        const snark = await getRelayerSnark(
+            BigInt(transferTo),
+            toNano(amount),
+            currentIndex,
+            props.password
+        );
+        if (snark.success) {
+            const { proof, publicSignals } = snark.snark;
+            
+            return { proof, publicSignals }
+        } else {
+            props.openSnackbar("Unable to compute withdraw proof");
+            return;
+        }
+
+
+    }
 
     return <Box >
         <Paper sx={{ maxWidth: 936, margin: "auto", overflow: "hidden", mt: "10px" }}>
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Typography component="h1" variant="h4">Wallet</Typography>
             </Stack>
-
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button onClick={() => props.showUTXOsPage()}>UTXOs</Button>
+                <pre style={{ overflow: "auto" }}>{currentAddress}</pre>
             </Stack>
+            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <pre style={{ overflow: "auto" }}>Balance: {walletBalance} {props.jettonTicker}</pre>
+            </Stack>
+
             <Info summary="How the UTXO wallet works?">
                 <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
                     <Typography component="p" variant="subtitle1">The wallet uses derived addresses. You can transfer to an address multiple times but spend only once. After spending the public address changes! Jetton Notes allows you to transfer Jettons with account abstraction and pay for fees using the Jetton instead of Ton. You don't need a Ton wallet to transfer Jettons but in the relayer is down it will fall back wallet transfers. </Typography>
@@ -54,22 +138,27 @@ export function HdWallet(props: HdWalletProps) {
             </Info>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-
-                }}></TextField>
-
-            </Stack>
-            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-
+                <TextField value={transferTo} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setTransferTo(event.target.value)
                 }}></TextField>
             </Stack>
+            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Typography component="p" variant="subtitle2">Make sure the transfer to is correct, invalid transfers can't be recovered!</Typography>
+            </Stack>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <TextField value={amount} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setAmount(event.target.value)
+                }}></TextField>
+            </Stack>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Button variant="contained">Transfer Value</Button>
+                {isWalletCalibrated ?
+                    <TxSummary transferValue={transferValue}></TxSummary>
+                    :
+                    <Button variant="contained" sx={{ maxWidth: "200px" }} onClick={async () => await runCalibration()}>Calibrate Wallet</Button>
+                }
             </Stack>
-            <RouteFooter content="The transfer fee is 0 tgBTC"></RouteFooter>
-
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testne"></RouteFooter>
         </Paper>
     </Box >
 }
