@@ -1,84 +1,91 @@
+import { fromNano } from "@ton/core";
 import { bip32derivedDeposit, parseNote, toNoteHex } from "../crypto/cryptonotes";
 import { decryptData, encryptData, Status } from "../crypto/encrypt";
-import { getAccountKey, getAllUTXOs } from "../storage";
+import { getAccountKey, setLastAddressUTXOIndex } from "../storage";
+import { getCommitmentBalanceWithoutWallet } from "./depositJettons";
 
-//TODO: this could have the how much... SO I have a function separate to generate
-//TODO: and one separate to parse them
-//TODO: There should be generate business logic,
-//TODO: on wallet import it should iterate over the utxos and find all the deposits to show...
-//TODO: always use a single utxo address fpr the wallet...
-//Then on transfer out it migrates to a new address
-
-export async function generateUTXOs(password: string, account_id: string) {
+export async function getNextValidWallet(password: string, account_id: string, startIndex: number, showError: (msg: string) => void) {
     const accountKeyFound = await getAccountKey();
     if (accountKeyFound) {
         const masterKeyData = await decryptData(accountKeyFound.cipherText.buffer, password);
         if (masterKeyData.status === Status.Success) {
             const parsedNote = await parseNote(masterKeyData.data);
 
-            const res = await getAllUTXOs(account_id);
+            let search = true;
+            let i = startIndex;
+            let fetchedBalance = "0";
+            let commitment = "";
+            while (search) {
+                const next = await generateNextNote(
+                    parsedNote.deposit.secret,
+                    parsedNote.deposit.nullifier,
+                    i,
+                    password,
+                    account_id
+                )
+                //Now do a fetch to check if the commitment is valid or has deposit etc...
+                try {
+                    const balance = await getCommitmentBalanceWithoutWallet(BigInt(next.commitment));
 
-            //TODO: I need logic to generate more UTXOs or not, how much etc...
+                    if (balance.nullifier != 0n) {
+                        //It's nullified, so I need to increment the index
+                        i++;
+                    } else {
+                        //Else I got it...probably
+                        search = false;
+                        setLastAddressUTXOIndex(i);
+                        fetchedBalance = fromNano(balance.depositAmount)
+                        commitment = next.commitment;
+                    }
 
-            //TODO: this will generate 20 notes...
-            const generatedEncryptedNotes = await generateNotes(
-                parsedNote.deposit.secret,
-                parsedNote.deposit.nullifier,
-                0,
-                19,
-                password,
-                account_id
-            );
-
-            console.log(generatedEncryptedNotes);
-
-            for (let i = 0; i < generatedEncryptedNotes.length; i++) {
-                console.log(parseKeys(generatedEncryptedNotes[i].key));
+                } catch (err: any) {
+                    //Some other exit code means I abort...
+                    search = false;
+                    showError("Network error.")
+                    //I set the last index so I know where to continue from to try again
+                    setLastAddressUTXOIndex(i);
+                }
             }
+
+            return { fetchedBalance, commitment, success: true }
         }
+        //If there is no account key, the whole thing should do nothing.
+    }
+    return {
+        success: false,
+        fetchedBalance: "",
+        commitment: ""
     }
 }
 
-async function generateNotes(
+export async function generateNextNote(
     masterSecret: bigint,
     masterNullifier: bigint,
-    startCounter: number,
-    endCounter: number,
+    index: number,
     password: string,
     account_id: string
 ) {
-    let derivedNotes = []
-    for (let i = startCounter; i < endCounter; i++) {
-        const derived = await bip32derivedDeposit(
-            {
-                masterSecret,
-                masterNullifier,
-                counter: i
-            })
-
-        const commitment = toNoteHex(derived.commitment);
-        const noteString = toNoteHex(derived.preimage, 64);
-        const cipherTextOptions = await encryptData(noteString, password);
-
-        derivedNotes.push({
-            key: generateKey(account_id, i, commitment),
-            value: cipherTextOptions.data
-        });
+    const derived = await bip32derivedDeposit({
+        masterSecret,
+        masterNullifier,
+        counter: index
+    })
+    const commitment = toNoteHex(derived.commitment);
+    const noteString = toNoteHex(derived.preimage, 64);
+    const cipherTextOptions = await encryptData(noteString, password);
+    return {
+        key: generateKey(account_id, index, commitment),
+        value: cipherTextOptions.data,
+        commitment
     }
-    return derivedNotes;
 }
-
-
-
-//Keys for the UTXOs are generated by combining the account_id and the index. 
-// There are special character separators For the names
 
 function generateKey(account_id: string, index: number, commitmentHash: string) {
     return `${account_id}&&${index}**${commitmentHash}`;
 }
 
 //This separates the keys at the special characters
-function parseKeys(key: string): { account_id: string, index: string, commitmentHash: string } {
+export function parseKeys(key: string): { account_id: string, index: string, commitmentHash: string } {
     const firstSplit = key.split("&&");
     const secondSplit = firstSplit[1].split("**");
 
@@ -88,3 +95,4 @@ function parseKeys(key: string): { account_id: string, index: string, commitment
         commitmentHash: secondSplit[1]
     }
 }
+
