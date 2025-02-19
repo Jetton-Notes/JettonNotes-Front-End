@@ -1,7 +1,8 @@
 import { beginCell, OpenedContract, Sender, toNano } from "@ton/core";
 import { TonClient } from "ton";
+
 import { Address } from "ton-core";
-import { JETTONNOTES_ADDRESS, tgBTC_jetton_master } from "../constants";
+import { currentNetwork, JETTONNOTES_ADDRESS, MainnetAPI, TestnetAPI, tgBTC_jetton_master } from "../constants";
 import { depositJettonsForwardPayload, DepositWithdraw } from "../contracts/depositWithdraw";
 import { JettonMinter } from "../contracts/jettonMinter";
 import { JettonWallet } from "../contracts/jettonWallet";
@@ -56,8 +57,19 @@ export function getDepositWithdrawContract(client: TonClient) {
 }
 
 export async function getCommitmentBalance(client: TonClient, commitment: bigint) {
+
     const depositWithdrawClient = getDepositWithdrawContract(client);
 
+    const deposit = await depositWithdrawClient.getDeposit(commitment);
+    return deposit;
+}
+
+export async function getCommitmentBalanceWithoutWallet(commitment: bigint) {
+    const client = new TonClient({
+        endpoint: currentNetwork === "testnet" ? TestnetAPI : MainnetAPI
+    })
+    const depositWithdrawClient = getDepositWithdrawContract(client);
+    
     const deposit = await depositWithdrawClient.getDeposit(commitment);
     return deposit;
 }
