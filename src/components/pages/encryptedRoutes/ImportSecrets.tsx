@@ -69,6 +69,10 @@ export function ImportSecrets(props: ImportSecretsPageProps) {
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Button variant="contained" onClick={() => { CheckKeyAndProceed() }}>Continue</Button>                </Stack>
             <RouteFooter content="The secret is used for withdrawing the value. Keep it confidential. If you lose your secret, there is no way to recover the deposit!" ></RouteFooter>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button variant="outlined" onClick={() => { props.navigate(EncryptedRoutes.NEWACCOUNT) }}>Go Back</Button>
+            </Stack>
+
         </Paper >
     </Box >
 }

@@ -36,7 +36,7 @@ export function BackupSecrets(props: BackupSecretsPageProps) {
             // Unable to encrypt, should not occur
             return;
         }
-        
+
         await saveAccountKey(ciphertext.data).then(async () => {
             await saveAccountIdentifier(account_id).then(async () => {
                 props.navigate(EncryptedRoutes.ENTERPASSWORD);
@@ -69,6 +69,9 @@ export function BackupSecrets(props: BackupSecretsPageProps) {
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Button disabled={!copiedSecret} variant="contained" onClick={async () => { await masterKeySaved() }}>Continue</Button>                </Stack>
             <RouteFooter content="The secret is used for powering the account abstraction. Keep it confidential. If you lose your secret, there is no way to recover the wallet!" ></RouteFooter>
+            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button variant="outlined" onClick={() => { props.navigate(EncryptedRoutes.NEWACCOUNT) }}>Go Back</Button>
+            </Stack>
         </Paper >
     </Box >
 }

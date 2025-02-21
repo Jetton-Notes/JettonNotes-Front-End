@@ -1,5 +1,6 @@
 import { Button, Box, Typography, Paper, TextField, Stack } from "@mui/material";
 import { RouteFooter } from "../../Footer";
+import { getAccountIdentifier } from "../../../storage";
 
 import React from "react";
 import { EncryptedRoutes } from "../../Base";
@@ -13,6 +14,22 @@ export type NewAccountRouteProps = {
 export function NewAccountRoute(props: NewAccountRouteProps) {
     const [passwordFirst, setPasswordFirst] = React.useState("");
     const [passwordSecond, setPasswordSecond] = React.useState("");
+
+    const [canShowBackButton, setCanShowBackButton] = React.useState(false);
+
+    React.useEffect(() => {
+        const setButton = async () => {
+            const account_id = await getAccountIdentifier();
+            if (account_id.success) {
+                setCanShowBackButton(true);
+            } else {
+                setCanShowBackButton(false);
+            }
+        }
+        setButton()
+
+    }, [])
+
 
     const goto = (route: EncryptedRoutes) => () => {
         if (passwordFirst.length < 10) {
@@ -58,6 +75,8 @@ export function NewAccountRoute(props: NewAccountRouteProps) {
             </Stack>
 
             <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
+            {canShowBackButton ? <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                <Button variant="outlined" onClick={() => props.goToNextAccount(EncryptedRoutes.ENTERPASSWORD)}>Go back</Button></Stack> : null}
         </Paper>
     </Box >
 
