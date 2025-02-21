@@ -4,10 +4,10 @@ import React from "react";
 import Info from "../../styled/Info";
 import { getLastAddressUTXOIndex } from "../../../storage";
 import { getNextValidWallet } from "../../../actions/generateUtxos";
-import { useTonClient } from "../../../hooks/useTonClient";
-import { toNano } from "@ton/core";
+import { fromNano, toNano } from "@ton/core";
 import { getRelayerSnark } from "../../../actions/getRelayerSnark";
 import TxSummary from "../TxSummary";
+import { getRelayerFeeWithoutWallet } from "../../../actions/depositJettons";
 
 export type HdWalletProps = {
     account_id: string,
@@ -27,7 +27,7 @@ export function HdWallet(props: HdWalletProps) {
     const [currentIndex, setCurrentIndex] = React.useState(0);
     React.useEffect(() => {
         const checkCalibration = async () => {
-            const lastUtxoIndexFound = await getLastAddressUTXOIndex();
+            const lastUtxoIndexFound = await getLastAddressUTXOIndex(props.account_id);
             if (lastUtxoIndexFound.success === false) {
                 setIsWalletCalibrated(false)
             } else {
@@ -55,6 +55,7 @@ export function HdWallet(props: HdWalletProps) {
         if (success) {
             setWalletBalance(fetchedBalance);
             setCurrentAddress(commitment);
+            setIsWalletCalibrated(true);
             return;
         }
         props.openSnackbar("Unable to finish calibration")
@@ -93,6 +94,8 @@ export function HdWallet(props: HdWalletProps) {
             return;
         }
 
+        const exactRelayerFee = await getRelayerFeeWithoutWallet();
+
         const snark = await getRelayerSnark(
             BigInt(transferTo),
             toNano(amount),
@@ -101,13 +104,18 @@ export function HdWallet(props: HdWalletProps) {
         );
         if (snark.success) {
             const { proof, publicSignals } = snark.snark;
-            
-            return { proof, publicSignals }
+
+            return { proof, publicSignals, exactRelayerFee: fromNano(exactRelayerFee), ...snark.renderedTxDetails }
         } else {
             props.openSnackbar("Unable to compute withdraw proof");
             return;
         }
+    }
 
+    async function redeemBalanceClicked() {
+        console.log("redeem balan2e clicked!")
+
+       
 
     }
 
@@ -116,7 +124,7 @@ export function HdWallet(props: HdWalletProps) {
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Typography component="h1" variant="h4">Wallet</Typography>
             </Stack>
-            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+            <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <pre style={{ overflow: "auto" }}>{currentAddress}</pre>
             </Stack>
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
@@ -127,7 +135,7 @@ export function HdWallet(props: HdWalletProps) {
                 <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
                     <Typography component="p" variant="subtitle1">The wallet uses derived addresses. You can transfer to an address multiple times but spend only once. After spending the public address changes! Jetton Notes allows you to transfer Jettons with account abstraction and pay for fees using the Jetton instead of Ton. You don't need a Ton wallet to transfer Jettons but in the relayer is down it will fall back wallet transfers. </Typography>
                 </Stack>
-                <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
+                <Stack sx={{ padding: "30px", overflow: "auto" }} direction={"row"} justifyContent="center">
                     <Typography component="p" variant="subtitle1">
                         Because the deposit accounts change, you can use the wallet identifier to check which masterkeys you are using.
                     </Typography>
@@ -135,6 +143,13 @@ export function HdWallet(props: HdWalletProps) {
                 <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <pre>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
                 </Stack>
+
+                {/* <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <Typography component="p" variant="subtitle1">
+                        You can redeem the balance of the wallet to your TON account
+                    </Typography>
+                    <Button onClick={redeemBalanceClicked}>Redeem Balance</Button>
+                </Stack> */}
             </Info>
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
@@ -142,7 +157,7 @@ export function HdWallet(props: HdWalletProps) {
                     setTransferTo(event.target.value)
                 }}></TextField>
             </Stack>
-            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+            <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Typography component="p" variant="subtitle2">Make sure the transfer to is correct, invalid transfers can't be recovered!</Typography>
             </Stack>
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
@@ -153,7 +168,7 @@ export function HdWallet(props: HdWalletProps) {
 
             <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 {isWalletCalibrated ?
-                    <TxSummary transferValue={transferValue}></TxSummary>
+                    <TxSummary openSnackbar={props.openSnackbar} jettonTicker={props.jettonTicker} transferValue={transferValue}></TxSummary>
                     :
                     <Button variant="contained" sx={{ maxWidth: "200px" }} onClick={async () => await runCalibration()}>Calibrate Wallet</Button>
                 }
