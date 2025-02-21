@@ -13,7 +13,6 @@ export async function getJettonWalletClient(client: TonClient, sender_address: s
     //@ts-ignore
     const jettonMinterClient = client.open(jettonMinter) as OpenedContract<JettonMinter>;
 
-
     const userJettonAddress = await jettonMinterClient.getWalletAddress(sender_address);
 
     const jettonWallet = JettonWallet.createFromAddress(userJettonAddress);
@@ -69,7 +68,18 @@ export async function getCommitmentBalanceWithoutWallet(commitment: bigint) {
         endpoint: currentNetwork === "testnet" ? TestnetAPI : MainnetAPI
     })
     const depositWithdrawClient = getDepositWithdrawContract(client);
-    
+
     const deposit = await depositWithdrawClient.getDeposit(commitment);
     return deposit;
+}
+
+export async function getRelayerFeeWithoutWallet() {
+    const client = new TonClient({
+        endpoint: currentNetwork === "testnet" ? TestnetAPI : MainnetAPI
+    })
+    const depositWithdrawClient = getDepositWithdrawContract(client);
+
+    const relayerData = await depositWithdrawClient.getRelayerData();
+
+    return relayerData.exact_fee_amount;
 }
