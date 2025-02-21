@@ -3,7 +3,7 @@ import * as React from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import getTheme from "./theme";
 import ResponsiveAppBar from "./AppBar";
-import { deposit, parseNote, toNoteHex } from "../crypto/cryptonotes";
+import { deposit, parseNote } from "../crypto/cryptonotes";
 import { NoteBalanceRoute } from "./pages/decryptedRoutes/NoteBalancePage";
 import { CreateRoute } from "./pages/decryptedRoutes/CreateNoteRoute";
 import { RedeemRoute } from "./pages/decryptedRoutes/RedeemRoute";
@@ -24,6 +24,7 @@ import { CHAIN } from "@tonconnect/protocol";
 import { depositJettons, getCommitmentBalance, getCommitmentBalanceWithoutWallet, getDepositWithdrawContract, getJettonWalletClient } from "../actions/depositJettons";
 import { Address, fromNano, toNano } from "@ton/core";
 import { redeemjettons } from "../actions/redeemJettons";
+import ShowMasterkey from "./pages/decryptedRoutes/ShowMasterkey";
 
 const theme = getTheme();
 
@@ -34,7 +35,8 @@ export enum DecryptedRoutes {
     NOTEBALANCE = "Note Balance",
     SHOWNOTESECRET = "SHOWNOTESECRET",
     HDWALLET = "Wallet",
-    HDWALLETUTXOS = "HDWALLETUTXOS"
+    HDWALLETUTXOS = "HDWALLETUTXOS",
+    SHOWMASTERKEY = "SHOWMASTERKEY"
 }
 
 export enum EncryptedRoutes {
@@ -287,6 +289,7 @@ export default function Base() {
 
     const getDecryptedRoutes = () => {
         switch (currentDecryptedRoute) {
+            
             case DecryptedRoutes.CREATE:
                 return <CreateRoute
                     onNotify={onNotify}
@@ -301,7 +304,9 @@ export default function Base() {
             case DecryptedRoutes.SHOWNOTESECRET:
                 return <ShowNoteSecret setNoteCommitment={setNoteCommitment} navigateToDeposit={() => setCurrentDecryptedRoute(DecryptedRoutes.PAYTO)} noteString={noteString}></ShowNoteSecret>
             case DecryptedRoutes.HDWALLET:
-                return <HdWallet jettonTicker={jettonTicker} password={password} openSnackbar={openSnackbar} account_id={accountId}></HdWallet>
+                return <HdWallet navigateTo={setCurrentDecryptedRoute} jettonTicker={jettonTicker} password={password} openSnackbar={openSnackbar} account_id={accountId}></HdWallet>
+            case DecryptedRoutes.SHOWMASTERKEY:
+                return <ShowMasterkey password={password} openSnackbar={openSnackbar} ></ShowMasterkey>
             default:
                 return <div>Invalid route</div>
         }
