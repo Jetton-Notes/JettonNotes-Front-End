@@ -110,13 +110,10 @@ export async function getAllUTXOs(account_id: string) {
     return results;
 }
 
-//TODO: I need to encrypt the notes before I save them...
-export async function saveManyUTXOs(keys: string[], values: { index: number, ciphertext: string, commitment: string }) {
-}
 
-export async function getLastAddressUTXOIndex(): Promise<{ success: boolean, data: number, error: string }> {
+export async function getLastAddressUTXOIndex(account_id: string): Promise<{ success: boolean, data: number, error: string }> {
     try {
-        const key = `last-utxo`;
+        const key = `${account_id}-last-utxo`;
 
         const res = await get(key);
 
@@ -143,9 +140,9 @@ export async function getLastAddressUTXOIndex(): Promise<{ success: boolean, dat
     }
 }
 
-export async function setLastAddressUTXOIndex(index: number) {
+export async function setLastAddressUTXOIndex(index: number, account_id: string) {
     try {
-        const key = `last-utxo`;
+        const key = `${account_id}-last-utxo`;
         await set(key, index);
         return {
             success: true,
@@ -158,3 +155,13 @@ export async function setLastAddressUTXOIndex(index: number) {
         }
     }
 }
+
+//TODO: save the last commitment tooo??
+
+export async function saveNote(key: string, cipherNote: Uint8Array) {
+
+}
+
+// export async function getNote(key: string): Uint8Array {
+
+// }
