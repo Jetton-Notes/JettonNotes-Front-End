@@ -33,7 +33,7 @@ export async function getNextValidWallet(password: string, account_id: string, s
                     } else {
                         //Else I got it...probably
                         search = false;
-                        setLastAddressUTXOIndex(i);
+                        setLastAddressUTXOIndex(i, account_id);
                         fetchedBalance = fromNano(balance.depositAmount)
                         commitment = next.commitment;
                     }
@@ -43,7 +43,7 @@ export async function getNextValidWallet(password: string, account_id: string, s
                     search = false;
                     showError("Network error.")
                     //I set the last index so I know where to continue from to try again
-                    setLastAddressUTXOIndex(i);
+                    setLastAddressUTXOIndex(i, account_id);
                 }
             }
 
