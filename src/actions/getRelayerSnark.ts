@@ -1,6 +1,7 @@
 import { decryptData, Status } from "../crypto/encrypt";
 import { getAccountKey } from "../storage";
 import { bip32derivedDeposit, generateNoteWithdrawProof, parseNote, toNoteHex } from "../crypto/cryptonotes";
+import { fromNano } from "ton-core";
 
 //This will get the zkSnark for the relayed transaction
 export async function getRelayerSnark(
@@ -44,7 +45,16 @@ export async function getRelayerSnark(
 
             return {
                 success: true,
-                snark: { proof, publicSignals },
+                snark: {
+                    proof, publicSignals
+                },
+                renderedTxDetails: {
+                    transferTo: toNoteHex(transferTo),
+                    amount: fromNano(amount),
+                    currentCommitment: toNoteHex(currentNote.commitment),
+                    utxoCommitment: toNoteHex(utxoNote.commitment)
+
+                },
                 error: ""
             }
         }
@@ -55,6 +65,12 @@ export async function getRelayerSnark(
     return {
         success: false,
         snark: {},
+        renderedTxDetails: {
+            transferTo: "",
+            amount: "",
+            currentCommitment: "",
+            utxoCommitment: "",
+        },
         error: ""
     }
 
