@@ -31,12 +31,19 @@ export function HdWallet(props: HdWalletProps) {
             if (lastUtxoIndexFound.success === false) {
                 setIsWalletCalibrated(false)
             } else {
-                const { fetchedBalance, commitment } = await getNextValidWallet(props.password, props.account_id, lastUtxoIndexFound.data, props.openSnackbar);
-
-                setWalletBalance(fetchedBalance);
-                setCurrentAddress(commitment);
-                setIsWalletCalibrated(true);
-                setCurrentIndex(lastUtxoIndexFound.data)
+                try {
+                    const { fetchedBalance, commitment, success } = await getNextValidWallet(props.password, props.account_id, lastUtxoIndexFound.data, props.openSnackbar);
+                    setWalletBalance(fetchedBalance);
+                    setCurrentAddress(commitment);
+                    setIsWalletCalibrated(true);
+                    setCurrentIndex(lastUtxoIndexFound.data)
+                    if (!success) {
+                        props.openSnackbar("failed to refresh wallet")
+                    }
+                } catch (err) {
+                    props.openSnackbar("Error occured refreshing the wallet")
+                    console.log(err)
+                }
             }
         }
         checkCalibration()
@@ -56,6 +63,7 @@ export function HdWallet(props: HdWalletProps) {
             setWalletBalance(fetchedBalance);
             setCurrentAddress(commitment);
             setIsWalletCalibrated(true);
+
             return;
         }
         props.openSnackbar("Unable to finish calibration")
@@ -115,7 +123,7 @@ export function HdWallet(props: HdWalletProps) {
     async function redeemBalanceClicked() {
         console.log("redeem balan2e clicked!")
 
-       
+
 
     }
 
@@ -124,12 +132,20 @@ export function HdWallet(props: HdWalletProps) {
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Typography component="h1" variant="h4">Wallet</Typography>
             </Stack>
-            <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <pre style={{ overflow: "auto" }}>{currentAddress}</pre>
-            </Stack>
-            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <pre style={{ overflow: "auto" }}>Balance: {walletBalance} {props.jettonTicker}</pre>
-            </Stack>
+            {isWalletCalibrated ? null :
+                <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <Button variant="contained" sx={{ maxWidth: "200px" }} onClick={async () => await runCalibration()}>Calibrate Wallet</Button>
+                </Stack>}
+
+            {isWalletCalibrated ?
+                <Stack sx={{ paddingLeft: "30px", paddingRight: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <pre style={{ overflow: "auto" }}>{currentAddress}</pre>
+                </Stack> : null}
+
+            {isWalletCalibrated ?
+                <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <pre style={{ overflow: "auto" }}>Balance: {walletBalance} {props.jettonTicker}</pre>
+                </Stack> : null}
 
             <Info summary="How the UTXO wallet works?">
                 <Stack sx={{ padding: "30px" }} direction={"row"} justifyContent="center">
@@ -141,7 +157,7 @@ export function HdWallet(props: HdWalletProps) {
                     </Typography>
                 </Stack>
                 <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                    <pre>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
+                    <pre style={{ overflow: "auto" }}>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
                 </Stack>
 
                 {/* <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
@@ -151,29 +167,31 @@ export function HdWallet(props: HdWalletProps) {
                     <Button onClick={redeemBalanceClicked}>Redeem Balance</Button>
                 </Stack> */}
             </Info>
+            {isWalletCalibrated ?
+                <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <TextField value={transferTo} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        setTransferTo(event.target.value)
+                    }}></TextField>
+                </Stack> : null}
+            {isWalletCalibrated ?
+                <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <Typography component="p" variant="subtitle2">Make sure the transfer to is correct, invalid transfers can't be recovered!</Typography>
+                </Stack>
+                : null}
+            {isWalletCalibrated ?
+                <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <TextField value={amount} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        setAmount(event.target.value)
+                    }}></TextField>
+                </Stack>
+                : null}
 
-            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField value={transferTo} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setTransferTo(event.target.value)
-                }}></TextField>
-            </Stack>
-            <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <Typography component="p" variant="subtitle2">Make sure the transfer to is correct, invalid transfers can't be recovered!</Typography>
-            </Stack>
-            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                <TextField value={amount} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setAmount(event.target.value)
-                }}></TextField>
-            </Stack>
-
-            <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                {isWalletCalibrated ?
+            {isWalletCalibrated ?
+                <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <TxSummary openSnackbar={props.openSnackbar} jettonTicker={props.jettonTicker} transferValue={transferValue}></TxSummary>
-                    :
-                    <Button variant="contained" sx={{ maxWidth: "200px" }} onClick={async () => await runCalibration()}>Calibrate Wallet</Button>
-                }
-            </Stack>
-            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testne"></RouteFooter>
+                </Stack>
+                : null}
+            <RouteFooter content="The Jetton Notes currently use tgBTC on Ton Testnet"></RouteFooter>
         </Paper>
     </Box >
 }
