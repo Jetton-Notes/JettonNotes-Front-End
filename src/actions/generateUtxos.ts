@@ -1,7 +1,7 @@
 import { fromNano } from "@ton/core";
 import { bip32derivedDeposit, parseNote, toNoteHex } from "../crypto/cryptonotes";
 import { decryptData, encryptData, Status } from "../crypto/encrypt";
-import { getAccountKey, setLastAddressUTXOIndex } from "../storage";
+import { getAccountKey, setLastAddressUTXOIndex, setLastCommtiment } from "../storage";
 import { getCommitmentBalanceWithoutWallet } from "./depositJettons";
 
 export async function getNextValidWallet(password: string, account_id: string, startIndex: number, showError: (msg: string) => void) {
@@ -34,6 +34,7 @@ export async function getNextValidWallet(password: string, account_id: string, s
                         //Else I got it...probably
                         search = false;
                         setLastAddressUTXOIndex(i, account_id);
+                        setLastCommtiment(i, account_id, next.commitment);
                         fetchedBalance = fromNano(balance.depositAmount)
                         commitment = next.commitment;
                     }
@@ -44,6 +45,7 @@ export async function getNextValidWallet(password: string, account_id: string, s
                     showError("Network error.")
                     //I set the last index so I know where to continue from to try again
                     setLastAddressUTXOIndex(i, account_id);
+                    setLastCommtiment(i, account_id, next.commitment)
                 }
             }
 

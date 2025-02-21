@@ -156,12 +156,42 @@ export async function setLastAddressUTXOIndex(index: number, account_id: string)
     }
 }
 
-//TODO: save the last commitment tooo??
-
-export async function saveNote(key: string, cipherNote: Uint8Array) {
-
+export async function setLastCommtiment(index: number, account_id: string, commitment: string) {
+    try {
+        const key = `${account_id}-${index}-commitment`
+        await set(key, commitment);
+    } catch (err: any) {
+        return {
+            success: false,
+            error: "Unable to set"
+        }
+    }
 }
 
-// export async function getNote(key: string): Uint8Array {
+export async function getLastCommitment(index: number, account_id: string, commitment: string) {
 
-// }
+    try {
+        const key = `${account_id}-${index}-commitment`;
+        const res = await get(key);
+        if (res) {
+            return {
+                success: true,
+                error: "",
+                data: res
+            }
+        }
+        return {
+            success: false,
+            error: "not found",
+            data: -1
+        }
+
+    } catch (err) {
+        return {
+            success: false,
+            error: "not found",
+            data: -1
+        }
+
+    }
+}
