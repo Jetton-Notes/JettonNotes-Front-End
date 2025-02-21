@@ -1,55 +1,40 @@
 # Jetton Notes - Front End 
 
-COMIGN SOON
+## The problem
+Wallets on Ton are messy. There are multiple standards already for wallet contracts and each jetton wallet must be deployed per wallet contract, it's extra work for a developer and confuses the users on which wallet to chose and how to recover it.
+Setting gas correctly is also hard on Ton. It's more advanced to use it than a chain like Eth. 
+There are mulitple address formats depending on encoding and and if you send to the wrong address e.g: to testnet, it can't be recovered even if you have the keys because the contract for the wallet was not deployed.
 
-> Starter template for a new TWA interacting with the TON blockchain
+## This project is
+A crypto note implementation and Jetton wallet with Account Abstraction.
 
-# Overview
+It gives you simpel wallet addresses, computed as hash(u256,u256)
 
-The project is highly-opinionated, and there are many other alternate routes it could have taken. Some examples:
+For Gas Free payments including POS, Micropayments and burner wallets, 
+Create Gift Cards, Game Asset attached balances or physical objects with Jetton balances.
+All trustless with relayed transactions.
 
-- Supports Ton Connect 2 wallets
-- Uses vite with react (alternative to create-react-app)
-- Uses the `ton` npm package
+## Why another Wallet contract? We got already 5 standards...
+This is not a TON wallet, this is a Jetton wallet which is a new take on how you access jettons and works together with the existing wallet standards. 
+With full relaying functional on mainnet, users can use Jettons without having a Ton wallet at all.
 
 
-# Prerequesities
+## Inspiration for the technology
+Tornado cash crypto notes were the main inspiration for Jetton Notes, the commit-reveal scheme used for anonymizing transactions can be leveraged for other use cases too.
 
-- Node.js v16 (other versions may work, needs more testing)
-- A TON Connect compatible wallet (e.g. [Tonkeeper](https://tonkeeper.com/))
+Use of technology:
 
-# What does this repo contain?
+Account Abstraction , P2P payments, POS systems
 
-- A react-based TWA-ready app, interacting with TON
-- Github actions set to deploy app to github pages
-- A script to connect a telegram bot to the deployed app
+Micro payments for apps or games
 
-# How to use
+Off-chain transactions using crypto notes Unlocks: 
+Gift Cards implementations
+Jettons attached to physical objects via crypto notes.
+>
+Crypto note based Jettons are embeddable in any application and can be transferred to users without a wallet.
 
-1. Create a template from this repo with the "Use this template" button
+Games where each in-game asset can hold jettons
 
-   1. Choose a name for your repo
-   2. `**IMPORTANT!!**` mark "Include all branches", otherwise github pages deployment will not work.
-      ![image](https://user-images.githubusercontent.com/5641469/191731317-14e742fd-accb-47d4-a794-fad01148a377.png)
+AI Agents with Balance
 
-2. Clone this repo and run `yarn`
-
-3. Create a new bot with [botfather](https://t.me/botfather)
-   1. Type `/newbot`
-   2. Choose a name for your bot, e.g. `My Ton TWA`
-   3. Choose a username for your bot, e.g. `my_ton_twa_482765_bot`
-   4. Take note of the access token, e.g. <Example token not shown>
-   5. Run `yarn configbot` to link your bot to the webapp
-
-# Development
-
-1. Run `npm run dev` and edit the code as needed
-2. On push to the `main` branch, the app will be automatically deployed via github actions.
-
-# Roadmap
-
-- [ ] Jetton transfer support
-
-# License
-
-MIT
