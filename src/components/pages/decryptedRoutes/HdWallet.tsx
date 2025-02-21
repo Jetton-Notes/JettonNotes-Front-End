@@ -8,16 +8,23 @@ import { fromNano, toNano } from "@ton/core";
 import { getRelayerSnark } from "../../../actions/getRelayerSnark";
 import TxSummary from "../TxSummary";
 import { getRelayerFeeWithoutWallet } from "../../../actions/depositJettons";
+import { DecryptedRoutes } from "../../Base";
 
 export type HdWalletProps = {
     account_id: string,
     password: string,
     openSnackbar: (msg: string) => void,
-    jettonTicker: string
+    jettonTicker: string,
+    navigateTo: (to: DecryptedRoutes) => void
 }
 
 export function HdWallet(props: HdWalletProps) {
-    const [isWalletCalibrated, setIsWalletCalibrated] = React.useState(false);
+
+    enum WalletCalibratedState {
+        LOADING, NOT, YES
+    }
+
+    const [isWalletCalibrated, setIsWalletCalibrated] = React.useState(WalletCalibratedState.LOADING);
 
     const [currentAddress, setCurrentAddress] = React.useState("");
     const [walletBalance, setWalletBalance] = React.useState("0");
@@ -29,13 +36,13 @@ export function HdWallet(props: HdWalletProps) {
         const checkCalibration = async () => {
             const lastUtxoIndexFound = await getLastAddressUTXOIndex(props.account_id);
             if (lastUtxoIndexFound.success === false) {
-                setIsWalletCalibrated(false)
+                setIsWalletCalibrated(WalletCalibratedState.NOT)
             } else {
                 try {
                     const { fetchedBalance, commitment, success } = await getNextValidWallet(props.password, props.account_id, lastUtxoIndexFound.data, props.openSnackbar);
                     setWalletBalance(fetchedBalance);
                     setCurrentAddress(commitment);
-                    setIsWalletCalibrated(true);
+                    setIsWalletCalibrated(WalletCalibratedState.YES);
                     setCurrentIndex(lastUtxoIndexFound.data)
                     if (!success) {
                         props.openSnackbar("failed to refresh wallet")
@@ -62,7 +69,7 @@ export function HdWallet(props: HdWalletProps) {
         if (success) {
             setWalletBalance(fetchedBalance);
             setCurrentAddress(commitment);
-            setIsWalletCalibrated(true);
+            setIsWalletCalibrated(WalletCalibratedState.YES);
 
             return;
         }
@@ -122,9 +129,6 @@ export function HdWallet(props: HdWalletProps) {
 
     async function redeemBalanceClicked() {
         console.log("redeem balan2e clicked!")
-
-
-
     }
 
     return <Box >
@@ -132,17 +136,17 @@ export function HdWallet(props: HdWalletProps) {
             <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                 <Typography component="h1" variant="h4">Wallet</Typography>
             </Stack>
-            {isWalletCalibrated ? null :
+            {isWalletCalibrated === WalletCalibratedState.NOT ?
                 <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <Button variant="contained" sx={{ maxWidth: "200px" }} onClick={async () => await runCalibration()}>Calibrate Wallet</Button>
-                </Stack>}
+                </Stack> : null}
 
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ paddingLeft: "30px", paddingRight: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <pre style={{ overflow: "auto" }}>{currentAddress}</pre>
                 </Stack> : null}
 
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <pre style={{ overflow: "auto" }}>Balance: {walletBalance} {props.jettonTicker}</pre>
                 </Stack> : null}
@@ -159,26 +163,22 @@ export function HdWallet(props: HdWalletProps) {
                 <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <pre style={{ overflow: "auto" }}>Your wallet identifier is {props.account_id.slice(0, 6)}...{props.account_id.slice(props.account_id.length - 6, props.account_id.length)}</pre>
                 </Stack>
-
-                {/* <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                    <Typography component="p" variant="subtitle1">
-                        You can redeem the balance of the wallet to your TON account
-                    </Typography>
-                    <Button onClick={redeemBalanceClicked}>Redeem Balance</Button>
-                </Stack> */}
+                <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <Button onClick={() => { props.navigateTo(DecryptedRoutes.SHOWMASTERKEY) }}>Reveal Masterkey</Button>
+                </Stack>
             </Info>
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <TextField value={transferTo} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="text" label="Transfer To" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                         setTransferTo(event.target.value)
                     }}></TextField>
                 </Stack> : null}
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ padding: "30px", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <Typography component="p" variant="subtitle2">Make sure the transfer to is correct, invalid transfers can't be recovered!</Typography>
                 </Stack>
                 : null}
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <TextField value={amount} disabled={!isWalletCalibrated} sx={{ width: "80%" }} type="number" label="Transfer Amount" onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                         setAmount(event.target.value)
@@ -186,7 +186,7 @@ export function HdWallet(props: HdWalletProps) {
                 </Stack>
                 : null}
 
-            {isWalletCalibrated ?
+            {isWalletCalibrated === WalletCalibratedState.YES ?
                 <Stack sx={{ mt: 2, display: "flex", flexDirection: "row", justifyContent: "center" }}>
                     <TxSummary openSnackbar={props.openSnackbar} jettonTicker={props.jettonTicker} transferValue={transferValue}></TxSummary>
                 </Stack>
