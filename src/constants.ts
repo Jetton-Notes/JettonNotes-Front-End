@@ -4,9 +4,10 @@ export const website = "https://jettonnotes.com"
 
 export const botlink = "https://t.me/jetton_notes_bot"
 
-export const tgBTC_jetton_master = "EQAtjC_IuHpCh65aReJ8NoSZ-_5EoI2JztuWKTq19ZQNfj3z";
+//TODO: Update this to the actual tgBTC jetton master kQDoy1cUAbGq253vwfoPcqSloODVAWkDBniR12PJFUHnK6Yf
+export const tgBTC_jetton_master = "kQDoy1cUAbGq253vwfoPcqSloODVAWkDBniR12PJFUHnK6Yf";
 
-export const JETTONNOTES_ADDRESS = "EQBPd9iwc7sqBrvzSeVE5gzuZmGVaWaxSbYQtckCRXN6oI0i";
+export const JETTONNOTES_ADDRESS = "EQDW_KLohAhwdPToks0Qvdf13pcMxI5H5Esnh6UubpAymCzU";
 
 export const currentNetwork = "testnet"
 
