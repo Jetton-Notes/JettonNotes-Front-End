@@ -1,5 +1,4 @@
 //FILE CONTENTS COPIED FROM THE SMART CONTRACT LIBRARY
-
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode, TupleBuilder } from '@ton/core';
 
 export type DepositWithdrawConfig = {
@@ -32,8 +31,10 @@ export function depositJettonsForwardPayload(config: DepositForwardPayload) {
 
 export const Opcodes = {
     withdraw: 0x4b4ccb18,
-    utxo_withdraw: 0x5b5ccb29,
-    set_fee_data: 0x6b6cc29
+    transfer_note: 0x5b5ccb29,
+    set_fee_data: 0x6b6cc29,
+    note_withdraw_to_external_with_utxo: 0x7b7cc20,
+    note_withdraw_to_note_no_utxo: 0x8bdd30
 };
 
 export class DepositWithdraw implements Contract {
@@ -94,7 +95,7 @@ export class DepositWithdraw implements Contract {
     }
 
 
-    async sendUtxo_Withdraw(
+    async sendTransfer_note(
         provider: ContractProvider,
         via: Sender,
         opts: {
@@ -110,7 +111,7 @@ export class DepositWithdraw implements Contract {
             value: opts.value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
-                .storeUint(Opcodes.utxo_withdraw, 32)
+                .storeUint(Opcodes.transfer_note, 32)
                 .storeUint(opts.queryID ?? 0, 64)
                 .storeRef(
                     beginCell()
@@ -131,10 +132,87 @@ export class DepositWithdraw implements Contract {
         });
     }
 
+    //This allows sending some HDWallet balance to an external wallet, but it must be pulled by the recipient and there is no relayer
+    async sendNoteWithdrawToExternalWalletWithUtxo(
+        provider: ContractProvider,
+        via: Sender,
+        opts: {
+            pi_a: Buffer;
+            pi_b: Buffer;
+            pi_c: Buffer;
+            pubInputs: bigint[];
+            value: bigint;
+            queryID?: number;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Opcodes.note_withdraw_to_external_with_utxo, 32)
+                .storeUint(opts.queryID ?? 0, 64)
+                .storeRef(
+                    beginCell()
+                        .storeBuffer(opts.pi_a)
+                        .storeRef(
+                            beginCell()
+                                .storeBuffer(opts.pi_b)
+                                .storeRef(
+                                    beginCell()
+                                        .storeBuffer(opts.pi_c)
+                                        .storeRef(
+                                            this.cellFromInputList(opts.pubInputs)
+                                        )
+                                )
+                        )
+                )
+                .endCell(),
+        });
+    }
+
+    //This allows withdrawing a note to another without utxo, for sweeping burner wallets into hd wallet
+    //it uses a relayer
+    async sendNoteWithdrawToNoteNoUtxo(
+        provider: ContractProvider,
+        via: Sender,
+        opts: {
+            pi_a: Buffer;
+            pi_b: Buffer;
+            pi_c: Buffer;
+            pubInputs: bigint[];
+            value: bigint;
+            queryID?: number;
+        }
+    ) {
+        await provider.internal(via, {
+            value: opts.value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Opcodes.note_withdraw_to_note_no_utxo, 32)
+                .storeUint(opts.queryID ?? 0, 64)
+                .storeRef(
+                    beginCell()
+                        .storeBuffer(opts.pi_a)
+                        .storeRef(
+                            beginCell()
+                                .storeBuffer(opts.pi_b)
+                                .storeRef(
+                                    beginCell()
+                                        .storeBuffer(opts.pi_c)
+                                        .storeRef(
+                                            this.cellFromInputList(opts.pubInputs)
+                                        )
+                                )
+                        )
+                )
+                .endCell(),
+        });
+    }
+
+
     async sendSet_fee_data(
         provider: ContractProvider,
         via: Sender, opts: {
-            relayer_address: Address,
             new_fee: bigint,
             value: bigint,
             queryID?: number
@@ -145,7 +223,6 @@ export class DepositWithdraw implements Contract {
             body: beginCell()
                 .storeUint(Opcodes.set_fee_data, 32)
                 .storeUint(opts.queryID ?? 0, 64)
-                .storeAddress(opts.relayer_address)
                 .storeCoins(opts.new_fee).endCell()
         })
     }
