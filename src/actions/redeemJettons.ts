@@ -70,7 +70,7 @@ export async function RelayerMissingTransferFallback(client: TonClient, sender: 
 
     const depositWithdrawClient = getDepositWithdrawContract(client);
 
-    await depositWithdrawClient.sendUtxo_Withdraw(sender, {
+    await depositWithdrawClient.sendTransfer_note(sender, {
         pi_a,
         pi_b,
         pi_c,
@@ -78,3 +78,4 @@ export async function RelayerMissingTransferFallback(client: TonClient, sender: 
         value: toNano("0.15")
     });
 }
+
